@@ -1,18 +1,15 @@
 import Link from "next/link"
 import Image from "next/image"
+import { Container, Button, Navbar, NavbarBrand } from "react-bootstrap"
 
-export default function Navbar() {
+export default function MyNavbar() {
   return (
     <header className="navbar navbar-expand-md navbar-light d-print-none">
-      <div className="container-xl">
-        <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu" aria-controls="navbar-menu" aria-expanded="false" aria-label="Toggle navigation">
-          <span className="navbar-toggler-icon"></span>
-        </button>
-        <h1 className="navbar-brand navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
-          <Link href={"/"}>
-            <Image src={"logo.svg"} width="110" height={"32"} alt="Tabler" className="navbar-brand-image"></Image>
-          </Link>
-        </h1>
+      <Container fluid="xl">
+        <Navbar.Brand href="/" className="navbar-brand-autodark d-none-navbar-horizontal pe-0 pe-md-3">
+          <Image src={"/logo.svg"} width="110" height={"32"} alt="Tabler" className="navbar-brand-image"></Image>
+        </Navbar.Brand>
+
         <div className="navbar-nav flex-row order-md-last">
           <div className="d-none d-md-flex">
             <div className="nav-item dropdown d-none d-md-flex me-3">
@@ -83,7 +80,7 @@ export default function Navbar() {
             </div>
           </div>
         </div>
-      </div>
+      </Container>
     </header>
   )
 }
