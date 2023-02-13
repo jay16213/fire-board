@@ -1,0 +1,59 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model Stock {
+  id        Int    @id @default(autoincrement())
+  stockId   String @unique
+  stockName String
+}
+
+model StockAccount {
+  id               Int                @id @default(autoincrement())
+  name             String             @unique
+  minFee           Int
+  regularFee       Int
+  feeDiscount      Decimal
+  StockPosition    StockPosition[]
+  StockTransaction StockTransaction[]
+}
+
+model StockPosition {
+  id             Int          @id @default(autoincrement())
+  account        StockAccount @relation(fields: [stockAccountId], references: [id])
+  stockAccountId Int
+  stockId        String
+  stockName      String
+  numOfShares    Int
+  avgCost        Decimal
+  cost           Int
+  balancePrice   Decimal
+}
+
+model StockTransaction {
+  id                Int          @id @default(autoincrement())
+  date              DateTime
+  account           StockAccount @relation(fields: [stockAccountId], references: [id])
+  stockAccountId    Int
+  stockId           String
+  stockName         String
+  type              String
+  category          String
+  numOfSharesTraded Int
+  dealPrice         Decimal
+  dealAmount        Int
+  fee               Int
+  feeAfterDiscount  Int
+  transactionTax    Int
+  transactionCost   Int
+  actualPayment     Int
+  bookPayment       Int
+}
