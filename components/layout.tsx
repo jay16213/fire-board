@@ -1,19 +1,19 @@
 import { IconHome, IconLifebuoy } from '@tabler/icons-react';
+import Head from 'next/head';
 import Link from 'next/link';
-import Script from 'next/script';
 import { Container, Navbar } from 'react-bootstrap';
 import PageWrapper from './elements/page/PageWrapper';
 import MyNavbar from './navbar';
 
 export const siteTitle = 'FireBoard'
 
-export default function Layout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
+      <Head>
+        <title>{siteTitle}</title>
+      </Head>
+
       <div className='page'>
         <MyNavbar></MyNavbar>
 
@@ -26,7 +26,7 @@ export default function Layout({
                   <li className="nav-item active">
                     <Link className="nav-link" href="/">
                       <span className="nav-link-icon d-md-none d-lg-inline-block">
-                        <IconHome></IconHome>
+                        <IconHome className='icon'></IconHome>
                       </span>
                       <span className="nav-link-title">
                         Home
@@ -36,7 +36,7 @@ export default function Layout({
                   <li className="nav-item">
                     <Link className="nav-link" href="../">
                       <span className="nav-link-icon d-md-none d-lg-inline-block">
-                        <IconHome></IconHome>
+                        <IconHome className='icon'></IconHome>
                       </span>
                       <span className="nav-link-title">
                         台股
@@ -46,7 +46,7 @@ export default function Layout({
                   <li className="nav-item dropdown">
                     <Link className="nav-link dropdown-toggle" href="#navbar-help" data-bs-toggle="dropdown" data-bs-auto-close="outside" role="button" aria-expanded="false">
                       <span className="nav-link-icon d-md-none d-lg-inline-block">
-                        <IconLifebuoy></IconLifebuoy>
+                        <IconLifebuoy className='icon'></IconLifebuoy>
                       </span>
                       <span className="nav-link-title">
                         Help
@@ -69,7 +69,8 @@ export default function Layout({
 
         <PageWrapper>{children}</PageWrapper>
       </div>
-      <Script src="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta17/dist/js/tabler.min.js"></Script>
     </>
   )
 }
+
+export default Layout;
