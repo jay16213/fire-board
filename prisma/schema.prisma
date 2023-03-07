@@ -11,9 +11,11 @@ datasource db {
 }
 
 model Stock {
-  id        Int    @id @default(autoincrement())
-  stockId   String @unique
-  stockName String
+  id           Int    @id @default(autoincrement())
+  stockId      String @unique
+  stockName    String
+  industryType String
+  type         String // '一般', 'ETF' TODO: use enum
 }
 
 model StockAccount {
@@ -39,21 +41,21 @@ model StockPosition {
 }
 
 model StockTransaction {
-  id                Int          @id @default(autoincrement())
-  date              DateTime
-  account           StockAccount @relation(fields: [stockAccountId], references: [id])
-  stockAccountId    Int
-  stockId           String
-  stockName         String
-  type              String
-  category          String
-  numOfSharesTraded Int
-  dealPrice         Decimal
-  dealAmount        Int
-  fee               Int
-  feeAfterDiscount  Int
-  transactionTax    Int
-  transactionCost   Int
-  actualPayment     Int
-  bookPayment       Int
+  id               Int          @id @default(autoincrement())
+  date             DateTime
+  account          StockAccount @relation(fields: [stockAccountId], references: [id])
+  stockAccountId   Int
+  stockId          String
+  stockName        String
+  type             String // '一般', 'ETF', '定期定額'
+  category         String // '買', '賣'
+  shares           Int
+  price            Decimal
+  amount           Int
+  fee              Int
+  feeAfterDiscount Int
+  transactionTax   Int
+  transactionCost  Int
+  actualPayment    Int
+  bookPayment      Int
 }

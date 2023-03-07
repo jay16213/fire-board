@@ -37,3 +37,9 @@ next-env.d.ts
 
 # dev database
 **/dev.db
+
+# data seeds
+prisma/seeds
+
+# dev env
+**/.env.development

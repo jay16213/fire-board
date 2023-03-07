@@ -12,11 +12,13 @@
     "seed": "ts-node prisma/seed.ts"
   },
   "dependencies": {
+    "@fugle/realtime": "^0.4.0",
     "@next/font": "13.1.6",
     "@prisma/client": "^4.10.1",
     "@tabler/core": "^1.0.0-beta17",
     "@tabler/icons-react": "^2.3.0",
     "@types/react": "18.0.27",
+    "@types/react-datepicker": "^4.10.0",
     "@types/react-dom": "18.0.10",
     "apexcharts": "^3.37.0",
     "bootstrap": "^5.3.0-alpha1",
@@ -27,7 +29,9 @@
     "react": "18.2.0",
     "react-apexcharts": "^1.4.0",
     "react-bootstrap": "^2.7.0",
+    "react-datepicker": "^4.10.0",
     "react-dom": "18.2.0",
+    "react-hook-form": "^7.43.5",
     "recharts": "^2.4.1",
     "swr": "^2.0.3"
   },

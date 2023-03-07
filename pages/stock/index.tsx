@@ -129,10 +129,10 @@ function timeFilter(filter_list: string[]) {
 }
 
 // export default class Home extends Component<HomeProps, HomeState> {
-const Home = (props: any) => {
+const StockPage = (props: any) => {
   return (
     <>
-      <PageHeader preTitle='Overview' title='Dashboard'>
+      <PageHeader preTitle='Overview' title='股票資產'>
         {/* Page title actions */}
         <div className="col-auto ms-auto">
           <div className="btn-list">
@@ -148,18 +148,6 @@ const Home = (props: any) => {
       <div className="page-body">
         <Container fluid='xl'>
           <Row className='row-deck row-cards'>
-            <Col sm={6} lg={3}>
-              <Card>
-                <Card.Body>
-                  <div className='d-flex flex-column align-items-center'>
-                    <h2>總資產</h2>
-                  </div>
-                  <div className="d-flex flex-column align-items-center">
-                    <div className="h1 mb-0 me-2">$2,000,000</div>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
             <Col sm={6} lg={3}>
               <Card>
                 <Card.Body>
@@ -225,12 +213,6 @@ const Home = (props: any) => {
                         </Pie>
                       </PieChart>
                     </div>
-
-                    {/* <div className='d-flex flex-column align-items-center'>
-                      <h3>按產業別</h3>
-                      <ApexChart options={options} series={series} type='donut' width={400}>
-                      </ApexChart>
-                    </div> */}
                   </div>
                 </Card.Body>
               </Card>
@@ -280,4 +262,4 @@ const Home = (props: any) => {
   )
 }
 
-export default Home;
+export default StockPage;

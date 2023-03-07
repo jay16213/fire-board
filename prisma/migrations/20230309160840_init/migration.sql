@@ -2,7 +2,9 @@
 CREATE TABLE "Stock" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "stockId" TEXT NOT NULL,
-    "stockName" TEXT NOT NULL
+    "stockName" TEXT NOT NULL,
+    "industryType" TEXT NOT NULL,
+    "type" TEXT NOT NULL
 );
 
 -- CreateTable
@@ -34,9 +36,11 @@ CREATE TABLE "StockTransaction" (
     "stockAccountId" INTEGER NOT NULL,
     "stockId" TEXT NOT NULL,
     "stockName" TEXT NOT NULL,
-    "numOfSharesTraded" INTEGER NOT NULL,
-    "dealPrice" DECIMAL NOT NULL,
-    "dealAmount" INTEGER NOT NULL,
+    "type" TEXT NOT NULL,
+    "category" TEXT NOT NULL,
+    "shares" INTEGER NOT NULL,
+    "price" DECIMAL NOT NULL,
+    "amount" INTEGER NOT NULL,
     "fee" INTEGER NOT NULL,
     "feeAfterDiscount" INTEGER NOT NULL,
     "transactionTax" INTEGER NOT NULL,

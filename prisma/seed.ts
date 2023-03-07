@@ -39,12 +39,16 @@ async function main() {
         prisma.stockTransaction.create({
           data: {
             date: new Date(transaction['交易日期']),
-            stockAccountId: transaction['帳戶'] == '永豐' ? 1 : 2,
+            account: {
+              connect: { id: transaction['帳戶'] == '永豐' ? 1 : 2 }
+            },
             stockId: transaction['代號'],
             stockName: transaction['股票'],
-            numOfSharesTraded: parseInt(transaction['成交股數'], 10),
-            dealPrice: parseFloat(transaction['成交價格']),
-            dealAmount: parseInt(transaction['成交價金'], 10),
+            category: transaction['買/賣'],
+            type: transaction['交易類別'],
+            shares: parseInt(transaction['成交股數'], 10),
+            price: parseFloat(transaction['成交價格']),
+            amount: parseInt(transaction['成交價金'], 10),
             fee: parseInt(transaction['手續費'], 10),
             feeAfterDiscount: parseInt(transaction['折讓後手續費'], 10),
             transactionTax: parseInt(transaction['交易稅'], 10),

@@ -49,20 +49,24 @@ export default class ExDividendRecord extends Component {
               <th className="w-1">日期
                 <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-sm icon-thick" width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M6 15l6 -6l6 6"></path></svg>
               </th>
-              <th>股票帳戶</th>
+              {/* <th>股票帳戶</th> */}
               <th>股票名稱</th>
               <th>持有股數</th>
               <th>現金股利</th>
               <th>股票股利</th>
+              <th>實領現金股利</th>
+              <th>實領股票股利</th>
             </tr>
           </thead>
           <tbody>
             {record.map((data, index) =>
               <tr key={index}>
                 <td className='text-center'><span className="text-muted">{data.date}</span></td>
-                <td className='text-center'><a href="#" className="text-reset" tabIndex={-1}>{data.account}</a></td>
+                {/* <td className='text-center'><a href="#" className="text-reset" tabIndex={-1}>{data.account}</a></td> */}
                 <td className='text-center'>{data.stock_name}</td>
                 <td className='text-end'>{data.shares}</td>
+                <td className='text-end'>{data.cash_dividend}</td>
+                <td className='text-end'>{data.stock_dividend}</td>
                 <td className='text-end'>{data.cash_dividend}</td>
                 <td className='text-end'>{data.stock_dividend}</td>
               </tr>

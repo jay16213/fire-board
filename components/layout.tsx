@@ -34,7 +34,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                     </Link>
                   </li>
                   <li className="nav-item">
-                    <Link className="nav-link" href="../">
+                    <Link className="nav-link" href="/stock">
                       <span className="nav-link-icon d-md-none d-lg-inline-block">
                         <IconHome className='icon'></IconHome>
                       </span>

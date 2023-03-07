@@ -1,28 +1,146 @@
 import PageHeader from '@/components/elements/page/PageHeader';
-import moment from 'moment';
+import { prisma } from '@/db/prisma';
+import { calculateFeeByAmount, calculateStockTransactionFee, calculateTax } from '@/lib/fee';
+import { IconCalendar } from '@tabler/icons-react';
+import { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import React, { useState } from 'react';
+import React from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import DatePicker from 'react-datepicker';
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
 
-const stock_account: string[] = [
-  '永豐金',
-  '玉山富果'
-]
+import { useRouter } from 'next/router';
+import "react-datepicker/dist/react-datepicker.css";
 
-export default function StockNewTransactionForm() {
-  const [stockIdIsValid, setstockIdIsValid] = useState('');
+type TransactionData = {
+  date: Date
+  accountId: number // accountId
+  stockId: string
+  stockName: string
+  type: string
+  sellOrBuy: string
+  shares: number
+  price: number
+  amount: number
+  fee: number
+  feeAfterDiscount: number
+  tax: number
+}
 
-  const checkStockIdOnChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const stockId: string = event.target.value
-    // TODO
-    if (stockId == '') {
-      setstockIdIsValid('')
-    } else if (stockId != '2330') {
-      setstockIdIsValid('is-invalid')
-      console.log('stock id check invalid')
+type Props = {
+  stockAccountList: {
+    name: string,
+    minFee: number,
+    regularFee: number
+    feeDiscount: number,
+  }[]
+}
+
+const StockNewTransactionForm: React.FC<Props> = ({ stockAccountList }: Props) => {
+  const router = useRouter()
+  const { control, register, handleSubmit, watch, getValues, setValue, formState: { errors } } = useForm<TransactionData>({
+    defaultValues: {
+      date: new Date(),
+      accountId: 0,
+      stockId: '',
+      stockName: '',
+      type: '一般',
+      sellOrBuy: '買',
+      shares: 0,
+      price: 0,
+      amount: 0,
+      fee: 0,
+      feeAfterDiscount: 0,
+      tax: 0
+    }
+  });
+
+  const onSubmit: SubmitHandler<TransactionData> = async (data, event) => {
+    // Stop the form from submitting and refreshing the page.
+    // event.preventDefault()
+
+    // Form the request for sending data to the server.
+    const options = {
+      // The method is POST because we are sending data.
+      method: 'POST',
+      // Tell the server we're sending JSON.
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // Body of the request is the JSON data we created above.
+      body: JSON.stringify(data),
+    }
+
+    const res = await fetch('/api/stock/transactions', options)
+    if (res.status != 201) {
+      alert('錯誤')
     } else {
-      setstockIdIsValid('is-valid')
-      console.log('stock id check valid')
+      router.push('/stock')
+    }
+  }
+
+  const handleStockIdChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const stockId: string = event.target.value
+
+    if (stockId.length >= 4) {
+      try {
+        const res = await fetch(`/api/stock/meta?stockId=${stockId}`)
+        const data = await res.json();
+
+        setValue('stockName', data.name)
+        setValue('type', data.type)
+      } catch (error) {
+        console.log(error)
+      }
+    }
+    else {
+      setValue('stockName', '')
+    }
+  }
+
+  const updateFields = (shares: number, price: number) => {
+    const sellOrBuy = getValues('sellOrBuy')
+    const stockType = getValues('type')
+    const account = stockAccountList[getValues('accountId')]
+
+    if (!Number.isNaN(shares) && !Number.isNaN(price)) {
+      let amount = Math.round(shares * price)
+      let { fee, feeAfterDiscount } = calculateStockTransactionFee(shares, price, account.feeDiscount, account.minFee)
+
+      setValue('amount', amount)
+      setValue('fee', fee)
+      setValue('feeAfterDiscount', feeAfterDiscount)
+
+      if (sellOrBuy == '賣') {
+        let tax = calculateTax(shares, price, stockType == 'ETF')
+        setValue('tax', tax)
+      }
+    }
+  }
+
+  const handleSharesChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const shares = event.target.valueAsNumber
+    const price = getValues('price')
+
+    updateFields(shares, price)
+  }
+
+  const handlePriceChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const shares = getValues('shares')
+    const price = event.target.valueAsNumber
+
+    updateFields(shares, price)
+  }
+
+  const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const amount = event.target.valueAsNumber
+    const account = stockAccountList[getValues('accountId')]
+
+    if (!Number.isNaN(amount)) {
+      let { fee, feeAfterDiscount } = calculateFeeByAmount(amount, account.feeDiscount, account.minFee)
+
+      setValue('fee', fee)
+      setValue('feeAfterDiscount', feeAfterDiscount)
     }
   }
 
@@ -45,7 +163,7 @@ export default function StockNewTransactionForm() {
           <Row className='row-cards'>
             <Col className='col-12'>
               <Card>
-                <Form>
+                <Form method='POST' action='/api/stock/transactions' onSubmit={handleSubmit(onSubmit)}>
                   <Card.Header>
                     <Card.Title as='h4'>台股交易</Card.Title>
                   </Card.Header>
@@ -54,37 +172,51 @@ export default function StockNewTransactionForm() {
                       <Form.Group className='col-lg-2'>
                         <Form.Label>交易日期</Form.Label>
                         <div className='input-icon'>
-                          <Form.Control type='date' placeholder={moment().format('YYYY-MM-DD')} id={'datepicker-icon'}></Form.Control>
+                          <Controller
+                            name={'date'}
+                            control={control}
+                            render={({ field }) => (
+                              <DatePicker
+                                placeholderText='請選擇日期'
+                                selected={field.value}
+                                onChange={(date) => field.onChange(date)}
+                                dateFormat='yyyy/MM/dd'
+                                className='form-control ps-3' // TODO: fix padding
+                              />
+                            )}
+                          />
                           <span className="input-icon-addon">
-                            {/* Download SVG icon from http://tabler-icons.io/i/calendar */}
-                            <svg xmlns="http://www.w3.org/2000/svg" className="icon" width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round">
-                              <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
-                              <path d="M4 5m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z"></path>
-                              <path d="M16 3l0 4"></path><path d="M8 3l0 4"></path>
-                              <path d="M4 11l16 0"></path><path d="M11 15l1 0"></path>
-                              <path d="M12 15l0 3">
-                              </path></svg>
+                            <IconCalendar className='icon'></IconCalendar>
                           </span>
                         </div>
                       </Form.Group>
 
                       <Form.Group className='col-lg-2'>
                         <Form.Label>交易帳戶</Form.Label>
-                        <Form.Select>
-                          {stock_account.map((account_name, index) =>
-                            <option key={index}>{account_name}</option>
+                        <Form.Select {...register('accountId')}>
+                          {stockAccountList.map((account, index) =>
+                            <option key={index} value={index}>{account.name}</option>
                           )}
                         </Form.Select>
                       </Form.Group>
 
                       <Form.Group className='col-lg-2'>
                         <Form.Label>股票代號</Form.Label>
-                        <Form.Control placeholder='2330' onChange={checkStockIdOnChange} className={stockIdIsValid}></Form.Control>
+                        <Form.Control placeholder='2330'
+                          {...register('stockId', { minLength: 4, required: true, onChange: handleStockIdChange })}
+                        >
+                        </Form.Control>
+                      </Form.Group>
+
+                      <Form.Group className='col-lg-2'>
+                        <Form.Label>股票名稱</Form.Label>
+                        <Form.Control placeholder='台積電' {...register('stockName', { required: true })}>
+                        </Form.Control>
                       </Form.Group>
 
                       <Form.Group className='col-lg-2'>
                         <Form.Label>買賣別</Form.Label>
-                        <Form.Select>
+                        <Form.Select {...register('sellOrBuy', { required: true })}>
                           <option>買</option>
                           <option>賣</option>
                         </Form.Select>
@@ -92,35 +224,78 @@ export default function StockNewTransactionForm() {
 
                       <Form.Group className='col-lg-2'>
                         <Form.Label>交易類別</Form.Label>
-                        <Form.Select>
+                        <Form.Select {...register('type', { required: true })}>
                           <option>一般</option>
                           <option>ETF</option>
                           <option>定期定額</option>
                         </Form.Select>
-                      </Form.Group>
-
-                      <Form.Group className='col-lg-2'>
-                        <Form.Label>股票名稱 TODO</Form.Label>
-                        <Form.Control placeholder='台積電'></Form.Control>
                       </Form.Group>
                     </Row>
 
                     <Row className='mt-4'>
                       <Form.Group className='col-lg-2'>
                         <Form.Label>交易股數</Form.Label>
-                        <Form.Control type='number' placeholder='1000'></Form.Control>
+                        <Form.Control
+                          type="number"
+                          {...register('shares', { min: 1, required: true, onChange: handleSharesChange })}
+                        >
+                        </Form.Control>
                       </Form.Group>
 
                       <Form.Group className='col-lg-2'>
                         <Form.Label>成交價格</Form.Label>
-                        <Form.Control placeholder='500'></Form.Control>
+                        <Form.Control type='number' {...register('price', { required: true, onChange: handlePriceChange })}>
+                        </Form.Control>
                       </Form.Group>
 
                       <Form.Group className='col-lg-2'>
-                        <Form.Label>手續費 TODO</Form.Label>
-                        <Form.Control placeholder='500'></Form.Control>
+                        <Form.Label>成交價金</Form.Label>
+                        <Form.Control placeholder='成交價金'
+                          type='number'
+                          {...register('amount', { required: true, onChange: handleAmountChange })}
+                        >
+                        </Form.Control>
+                      </Form.Group>
+
+                      <Form.Group className='col-lg-2'>
+                        <Form.Label>手續費</Form.Label>
+                        <Form.Control placeholder='折扣前手續費'
+                          type='number'
+                          {...register('fee', { required: true })}
+                        >
+                        </Form.Control>
+                      </Form.Group>
+
+                      <Form.Group className='col-lg-2'>
+                        <Form.Label>折讓後手續費</Form.Label>
+                        <Form.Control placeholder='折扣後手續費'
+                          type='number'
+                          {...register('feeAfterDiscount', { required: true })}
+                        >
+                        </Form.Control>
+                      </Form.Group>
+
+                      <Form.Group className='col-lg-2'>
+                        <Form.Label>交易稅</Form.Label>
+                        <Form.Control placeholder='賣出交易稅'
+                          type='number'
+                          {...register('tax', { required: (watch('sellOrBuy') == '賣') })}
+                          disabled={(watch('sellOrBuy') == '買')}
+                        >
+                        </Form.Control>
                       </Form.Group>
                     </Row>
+
+                    {/* transaction info */}
+                    <Row className='mt-4 border-top pt-3'>
+                      <Col className='col-12'>
+                        <h2>以下是您本次交易明細：</h2>
+                      </Col>
+                      <Col>
+                        T.B.D
+                      </Col>
+                    </Row>
+
                   </Card.Body>
                   <Card.Footer className='text-end'>
                     <div className='d-flex'>
@@ -138,3 +313,19 @@ export default function StockNewTransactionForm() {
     </>
   )
 }
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const stockAccountList = await prisma.stockAccount.findMany({
+    select: {
+      name: true,
+      minFee: true,
+      regularFee: true,
+      feeDiscount: true,
+    }
+  })
+
+  console.log(stockAccountList)
+  return { props: { stockAccountList: JSON.parse(JSON.stringify(stockAccountList)) } }
+}
+
+export default StockNewTransactionForm;

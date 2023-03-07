@@ -3,7 +3,8 @@ import { Card } from 'react-bootstrap';
 import ApexChart from './elements/ApexChart';
 
 export interface AssetTrendCardProps {
-  apexOptions?: ApexOptions
+  apexOptions?: ApexOptions,
+  width?: number
 }
 
 type AssetTrendCardState = {}
@@ -73,7 +74,7 @@ const defaultOptions: ApexOptions = {
 }
 
 export const AssetTrendCard = (props: AssetTrendCardProps) => {
-  const { apexOptions = defaultOptions } = props;
+  const { apexOptions = defaultOptions, width = 600 } = props;
 
   return (
     <Card>
@@ -87,7 +88,7 @@ export const AssetTrendCard = (props: AssetTrendCardProps) => {
             options={apexOptions}
             series={series}
             type="area"
-            width='600'>
+            width={width}>
           </ApexChart>
         </div>
       </Card.Body>
