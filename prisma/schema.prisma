@@ -32,9 +32,9 @@ model StockPosition {
   id             Int          @id @default(autoincrement())
   account        StockAccount @relation(fields: [stockAccountId], references: [id])
   stockAccountId Int
-  stockId        String
+  stockId        String       @unique
   stockName      String
-  numOfShares    Int
+  shares         Int
   avgCost        Decimal
   cost           Int
   balancePrice   Decimal

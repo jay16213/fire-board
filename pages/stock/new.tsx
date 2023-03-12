@@ -29,6 +29,7 @@ type TransactionData = {
 
 type Props = {
   stockAccountList: {
+    id: number,
     name: string,
     minFee: number,
     regularFee: number
@@ -195,7 +196,7 @@ const StockNewTransactionForm: React.FC<Props> = ({ stockAccountList }: Props) =
                         <Form.Label>交易帳戶</Form.Label>
                         <Form.Select {...register('accountId')}>
                           {stockAccountList.map((account, index) =>
-                            <option key={index} value={index}>{account.name}</option>
+                            <option key={index} value={account.id}>{account.name}</option>
                           )}
                         </Form.Select>
                       </Form.Group>
@@ -317,6 +318,7 @@ const StockNewTransactionForm: React.FC<Props> = ({ stockAccountList }: Props) =
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const stockAccountList = await prisma.stockAccount.findMany({
     select: {
+      id: true,
       name: true,
       minFee: true,
       regularFee: true,

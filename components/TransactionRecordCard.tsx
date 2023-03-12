@@ -1,5 +1,6 @@
+import { fetcher } from '@/lib/fetcher';
 import moment from 'moment';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { Card } from 'react-bootstrap';
 import useSWR from 'swr';
 
@@ -11,9 +12,10 @@ export type StockTransactionProps = {
   }
   stockId: string
   stockName: string
-  numOfSharesTraded: number
-  dealPrice: number
-  dealAmount: number
+  shares: number
+  category: string
+  price: number
+  amount: number
   fee: number
   feeAfterDiscount: number
   transactionTax: number
@@ -21,8 +23,6 @@ export type StockTransactionProps = {
   actualPayment: number
   bookPayment: number
 }
-
-const fetcher = (url: string) => fetch(url).then(res => res.json())
 
 // const TransactionRecord: React.FC<{ transactions: StockTransactionProps[] }> = ({ transactions }) => {
 const TransactionRecordCard: React.FC = () => {
@@ -76,23 +76,24 @@ const TransactionRecordCard: React.FC = () => {
               <th>成交股數</th>
               <th>成交價格</th>
               <th>帳面收付</th>
-              <th></th>
+              {/* <th></th> */}
             </tr>
           </thead>
           <tbody>
             {data.map((transaction: StockTransactionProps, index: number) =>
-              <tr key={index} className='text-center'>
+              < tr key={index} className='text-center' >
                 <td><span className="text-muted">{moment(transaction.date).format('YYYY/MM/DD')}</span></td>
                 <td><a href="#" className="text-reset" tabIndex={-1}>{transaction.account.name}</a></td>
                 <td>{transaction.stockName}</td>
-                <td>{'TODO'}</td>
-                <td className='text-end'>{transaction.numOfSharesTraded}</td>
-                <td>{transaction.dealPrice}</td>
-                {transaction.bookPayment > 0
-                  ? <td className='text-end text-red'>{transaction.bookPayment}</td>
-                  : <td className='text-end text-green'>{transaction.bookPayment}</td>
+                <td>{transaction.category}</td>
+                <td className='text-end'>{transaction.shares}</td>
+                <td className='text-end'>{Number(transaction.price).toFixed(2)}</td>
+                {
+                  transaction.bookPayment > 0
+                    ? <td className='text-end text-red'>{transaction.bookPayment}</td>
+                    : <td className='text-end text-green'>{transaction.bookPayment}</td>
                 }
-                <td className="text-end">
+                {/* < td className="text-end" >
                   <span className="dropdown">
                     <button className="btn dropdown-toggle align-text-top" data-bs-boundary="viewport" data-bs-toggle="dropdown">Actions</button>
                     <div className="dropdown-menu dropdown-menu-end">
@@ -104,12 +105,12 @@ const TransactionRecordCard: React.FC = () => {
                       </a>
                     </div>
                   </span>
-                </td>
+                </td> */}
               </tr>
             )}
           </tbody>
         </table>
-      </div>
+      </div >
 
       <Card.Footer className='d-flex align-items-center'>
         <p className="m-0 text-muted">Showing <span>1</span> to <span>8</span> of <span>16</span> entries</p>
@@ -136,7 +137,7 @@ const TransactionRecordCard: React.FC = () => {
           </li>
         </ul>
       </Card.Footer>
-    </Card>
+    </Card >
 
   )
 }

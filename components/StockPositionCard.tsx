@@ -1,60 +1,65 @@
+import { fetcher } from '@/lib/fetcher';
 import { Card } from 'react-bootstrap';
+import useSWR from 'swr';
 
-const positions = [
-  {
-    account: "永豐金",
-    stock_id: "006208",
-    stock_name: "富邦台灣50",
-    shares: "2000",
-    current_price: 69,
-    unrealized_gains_losses: 2000
-  },
-  {
-    account: "永豐金",
-    stock_id: "0050",
-    stock_name: "台灣50",
-    shares: "1000",
-    current_price: 120,
-    unrealized_gains_losses: -1000,
-  },
-  {
-    account: "玉山富果",
-    stock_id: "2330",
-    stock_name: "台積電",
-    shares: "250",
-    current_price: 500,
-    unrealized_gains_losses: 4500,
-  },
-]
+export type StockPositionProps = {
+  account: {
+    name: string
+  }
+  stockId: string
+  stockName: string
+  shares: number
+  currentPrice: number
+  cost: number
+  unrealizedGainsLosses: number
+}
 
-const StockPositionCard = () => {
+const StockPositionCard: React.FC = () => {
+  const { data, error } = useSWR<StockPositionProps[], Error>('/api/stock/positions', fetcher)
+
+  if (error) return <div>An error occured.</div>
+  if (!data) return <div>Loading ...</div>
+
   return (
     <Card>
       <Card.Header>
-        <Card.Title as={'h3'}>台股庫存 TODO</Card.Title>
+        <Card.Title as={'h3'}>台股庫存</Card.Title>
       </Card.Header>
       <Card.Body>
         <div className="table-responsive">
           <table className="table card-table table-vcenter text-nowrap datatable">
             <thead>
               <tr className='text-center'>
-                <th>股票帳戶</th>
+                {/* <th>股票帳戶</th> */}
                 <th>股票名稱</th>
                 <th>持有股數</th>
+                <th>現價</th>
                 <th>市值</th>
+                <th>持有成本</th>
                 <th>未實現損益</th>
+                <th>獲利率</th>
               </tr>
             </thead>
             <tbody>
-              {positions.map((data, index) =>
+              {data.map((position: StockPositionProps, index: number) =>
                 <tr key={index}>
-                  <td className='text-center'>{data.account}</td>
-                  <td className='text-center'>{data.stock_name}</td>
-                  <td className='text-end'>{data.shares}</td>
-                  <td className='text-end'>{data.current_price}</td>
-                  {data.unrealized_gains_losses > 0
-                    ? <td className='text-end text-green'>{data.unrealized_gains_losses}</td>
-                    : <td className='text-end text-red'>{data.unrealized_gains_losses}</td>
+                  {/* <td className='text-center'>{position.account.name}</td> */}
+                  <td className='text-center'>{position.stockName}</td>
+                  <td className='text-end'>{position.shares}</td>
+                  <td className='text-end'>{position.currentPrice}</td>
+                  <td className='text-end'>{position.currentPrice}</td>
+                  <td className='text-end'>{Math.abs(position.cost)}</td>
+                  {position.unrealizedGainsLosses > 0
+                    ?
+                    <>
+                      <td className='text-end text-red'>{position.unrealizedGainsLosses}</td>
+                      <td className='text-end text-red'>0.00%</td>
+                    </>
+                    :
+                    <>
+                      <td className='text-end text-green'>{position.unrealizedGainsLosses}</td>
+                      <td className='text-end text-green'>0.00%</td>
+                    </>
                   }
                 </tr>
               )}
@@ -62,7 +67,7 @@ const StockPositionCard = () => {
           </table>
         </div>
       </Card.Body>
-    </Card>
+    </Card >
   )
 }
 
