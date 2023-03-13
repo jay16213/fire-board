@@ -4,11 +4,14 @@ import PageHeader from '@/components/elements/page/PageHeader';
 import ExDividendRecord from '@/components/ExDividendRecord';
 import StockPositionCard from '@/components/StockPositionCard';
 import TransactionRecordCard from '@/components/TransactionRecordCard';
+import { fetcher } from '@/lib/fetcher';
 import { IconPlus } from '@tabler/icons-react';
 import { ApexOptions } from 'apexcharts';
 import Link from 'next/link';
 import { Card, Col, Container, Row } from 'react-bootstrap';
 import { Cell, Legend, Pie, PieChart } from 'recharts';
+import useSWR from 'swr';
+
 
 const defult_filter_list: string[] = [
   'Last 7 days',
@@ -16,7 +19,7 @@ const defult_filter_list: string[] = [
   'Last 3 months',
 ];
 
-const data = [
+const data_a = [
   { name: '台積電', value: 80000 },
   { name: '富邦台灣50', value: 70000 },
   { name: '國泰永續高股息', value: 75000 },
@@ -38,8 +41,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
-const series = [44, 55, 41, 17, 15]
-const options: ApexOptions = {
+const defaultOptions: ApexOptions = {
   chart: {
     type: 'donut',
     height: 300,
@@ -59,19 +61,19 @@ const options: ApexOptions = {
     pie: {
       donut: {
         size: '65%',
-        labels: {
-          show: true,
-          // name: {
-          //   show: true,
-          // },
-          // value: {
-          //   show: true,
-          // },
-          total: {
-            show: true,
-            showAlways: true,
-          }
-        }
+        // labels: {
+        // show: true,
+        // name: {
+        //   show: true,
+        // },
+        // value: {
+        //   show: true,
+        // },
+        // total: {
+        //   show: true,
+        //   showAlways: true,
+        // }
+        // }
       }
     }
   },
@@ -128,8 +130,12 @@ function timeFilter(filter_list: string[]) {
   )
 }
 
-// export default class Home extends Component<HomeProps, HomeState> {
 const Home = (props: any) => {
+  const { data, error } = useSWR<any[], Error>('/api/stock/positions', fetcher)
+
+  if (error) return <div>An error occured.</div>
+  if (!data) return <div>Loading ...</div>
+
   return (
     <>
       <PageHeader preTitle='Overview' title='Dashboard'>
@@ -167,7 +173,9 @@ const Home = (props: any) => {
                     <h2>股票總市值</h2>
                   </div>
                   <div className="d-flex flex-column align-items-center">
-                    <div className="h1 mb-0 me-2">$1,000,000</div>
+                    <div className="h1 mb-0 me-2">
+                      {`\$${data.reduce((total, position) => total + position.currentValue, 0)}`}
+                    </div>
                   </div>
                 </Card.Body>
               </Card>
@@ -179,7 +187,9 @@ const Home = (props: any) => {
                     <h2>未實現損益</h2>
                   </div>
                   <div className="d-flex flex-column align-items-center">
-                    <div className="h1 mb-0 me-2">$1,000,000</div>
+                    <div className="h1 mb-0 me-2">
+                      {`\$${data.reduce((total, position) => total + position.unrealizedGainsLosses, 0)}`}
+                    </div>
                   </div>
                 </Card.Body>
               </Card>
@@ -208,7 +218,7 @@ const Home = (props: any) => {
                       <PieChart width={400} height={200}>
                         <Legend layout='vertical' align='right' verticalAlign='middle'></Legend>
                         <Pie
-                          data={data}
+                          data={data_a}
                           innerRadius={50}
                           outerRadius={80}
                           label={renderCustomizedLabel}
@@ -218,19 +228,12 @@ const Home = (props: any) => {
                           nameKey="name"
                           dataKey="value"
                         >
-                          {/* <LabelList dataKey={'name'} position='inside'></LabelList> */}
-                          {data.map((entry, index) => (
+                          {data_a.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
                       </PieChart>
                     </div>
-
-                    {/* <div className='d-flex flex-column align-items-center'>
-                      <h3>按產業別</h3>
-                      <ApexChart options={options} series={series} type='donut' width={400}>
-                      </ApexChart>
-                    </div> */}
                   </div>
                 </Card.Body>
               </Card>
@@ -243,7 +246,12 @@ const Home = (props: any) => {
                     <div className='subheader'>持股分布 (產業別)</div>
                   </div>
                   <div className='d-flex flex-column align-items-center'>
-                    <ApexChart options={options} series={series} type='donut' width={400}>
+                    <ApexChart
+                      options={{ ...defaultOptions, labels: data.map((d) => d.stockName) }}
+                      series={data.map((d) => d.currentValue)}
+                      type='donut'
+                      width={380}
+                    >
                     </ApexChart>
                   </div>
                 </Card.Body>
@@ -255,7 +263,7 @@ const Home = (props: any) => {
             </Col>
 
             <Col sm={12} lg={6}>
-              <StockPositionCard></StockPositionCard>
+              <StockPositionCard positions={data}></StockPositionCard>
             </Col>
 
             <Col sm={12} lg={6}>

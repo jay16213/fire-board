@@ -2,20 +2,30 @@ import { fetcher } from '@/lib/fetcher';
 import { Card } from 'react-bootstrap';
 import useSWR from 'swr';
 
-export type StockPositionProps = {
-  account: {
-    name: string
-  }
+export type StockPosition = {
+  // account: {
+  //   name: string
+  // }
   stockId: string
   stockName: string
   shares: number
   currentPrice: number
   cost: number
+  avgCost: number
   unrealizedGainsLosses: number
+  unrealizedGainsRatio: number
 }
 
-const StockPositionCard: React.FC = () => {
-  const { data, error } = useSWR<StockPositionProps[], Error>('/api/stock/positions', fetcher)
+export type StockPositionCardProps = {
+  positions?: StockPosition[]
+}
+
+const StockPositionCard: React.FC<StockPositionCardProps> = ({ positions }: StockPositionCardProps) => {
+  const { data, error } = useSWR<StockPosition[], Error>(
+    typeof positions === 'undefined' ? '/api/stock/positions' : null,
+    fetcher,
+    { fallbackData: positions }
+  )
 
   if (error) return <div>An error occured.</div>
   if (!data) return <div>Loading ...</div>
@@ -35,30 +45,30 @@ const StockPositionCard: React.FC = () => {
                 <th>持有股數</th>
                 <th>現價</th>
                 <th>市值</th>
-                <th>持有成本</th>
+                <th>持有成本 (平均成本)</th>
                 <th>未實現損益</th>
                 <th>獲利率</th>
               </tr>
             </thead>
             <tbody>
-              {data.map((position: StockPositionProps, index: number) =>
+              {data.map((position: StockPosition, index: number) =>
                 <tr key={index}>
                   {/* <td className='text-center'>{position.account.name}</td> */}
                   <td className='text-center'>{position.stockName}</td>
                   <td className='text-end'>{position.shares}</td>
                   <td className='text-end'>{position.currentPrice}</td>
                   <td className='text-end'>{position.currentPrice}</td>
-                  <td className='text-end'>{Math.abs(position.cost)}</td>
+                  <td className='text-end'>{`${Math.abs(position.cost)} (${Math.abs(position.avgCost)})`}</td>
                   {position.unrealizedGainsLosses > 0
                     ?
                     <>
                       <td className='text-end text-red'>{position.unrealizedGainsLosses}</td>
-                      <td className='text-end text-red'>0.00%</td>
+                      <td className='text-end text-red'>{`${position.unrealizedGainsRatio.toFixed(2)}%`}</td>
                     </>
                     :
                     <>
                       <td className='text-end text-green'>{position.unrealizedGainsLosses}</td>
-                      <td className='text-end text-green'>0.00%</td>
+                      <td className='text-end text-green'>{`${position.unrealizedGainsRatio.toFixed(2)}%`}</td>
                     </>
                   }
                 </tr>

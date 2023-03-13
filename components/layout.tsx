@@ -1,6 +1,7 @@
 import { IconHome, IconLifebuoy } from '@tabler/icons-react';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useRouter } from 'next/router';
 import { Container, Navbar } from 'react-bootstrap';
 import PageWrapper from './elements/page/PageWrapper';
 import MyNavbar from './navbar';
@@ -8,6 +9,8 @@ import MyNavbar from './navbar';
 export const siteTitle = 'FireBoard'
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
+  const router = useRouter();
+
   return (
     <>
       <Head>
@@ -23,17 +26,17 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <div className="navbar navbar-light">
               <Container fluid='xl'>
                 <ul className="navbar-nav">
-                  <li className="nav-item active">
+                  <li className={router.pathname == '/' ? 'nav-item active' : 'nav-item'}>
                     <Link className="nav-link" href="/">
                       <span className="nav-link-icon d-md-none d-lg-inline-block">
                         <IconHome className='icon'></IconHome>
                       </span>
                       <span className="nav-link-title">
-                        Home
+                        首頁
                       </span>
                     </Link>
                   </li>
-                  <li className="nav-item">
+                  <li className={router.pathname == '/stock' ? 'nav-item active' : 'nav-item'}>
                     <Link className="nav-link" href="/stock">
                       <span className="nav-link-icon d-md-none d-lg-inline-block">
                         <IconHome className='icon'></IconHome>

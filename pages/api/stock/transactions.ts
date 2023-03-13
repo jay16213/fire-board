@@ -59,18 +59,26 @@ export default async function handle(
     case 'POST':
       try {
         // TODO: request validation
-        const transaction: StockTransaction = await createTransaction(req.body)
-
-        // step 2: update stock position
+        const reqData = req.body
+        console.log(reqData)
         try {
-          const position: StockPosition = await prisma.stockPosition.findFirstOrThrow({ where: { stockId: transaction.stockId } })
+          // step 1: check stock position
+          const position: StockPosition = await prisma.stockPosition.findFirstOrThrow({
+            where: {
+              stockAccountId: parseInt(reqData.accountId),
+              stockId: reqData.stockId,
+            },
+          })
+          let transaction: StockTransaction
           let shares = 0, cost
 
-          // update shares
-          if (transaction.category == '買') {
+          // step 2: create transaction and update position
+          if (reqData.sellOrBuy == '買') {
+            transaction = await createTransaction(reqData)
             shares = position.shares + transaction.shares
           } else {
-            if (position.shares >= transaction.shares) {
+            if (position.shares >= reqData.shares) {
+              transaction = await createTransaction(reqData)
               shares = position.shares - transaction.shares
             } else {
               console.log('Sell too much shares')
@@ -78,8 +86,7 @@ export default async function handle(
             }
           }
 
-          // update cost
-          cost = position.cost + transaction.bookPayment
+          cost = position.cost + transaction.bookPayment // update cost
 
           await prisma.stockPosition.update({
             where: { stockId: transaction.stockId },
@@ -90,20 +97,26 @@ export default async function handle(
               balancePrice: calculateBalancePrice(cost, shares, transaction.type == 'ETF'),
             }
           })
+
+          res.status(201).json(transaction);
         } catch (err) {
-          if (err instanceof Prisma.PrismaClientKnownRequestError) {
-            if (transaction.category == '買') {
+          if (err instanceof Prisma.PrismaClientKnownRequestError) { // position not found in db
+            if (reqData.sellOrBuy == '買') { // first buy transaction
+              const transaction = await createTransaction(reqData)
+
               await prisma.stockPosition.create({
                 data: {
-                  account: { connect: { id: transaction.stockAccountId } },
-                  stockId: transaction.stockId,
-                  stockName: transaction.stockName,
-                  shares: transaction.shares,
-                  avgCost: Math.abs(transaction.bookPayment / transaction.shares).toFixed(2),
-                  cost: transaction.bookPayment,
-                  balancePrice: calculateBalancePrice(transaction.bookPayment, transaction.shares, transaction.type == 'ETF'),
+                  account: { connect: { id: reqData.stockAccountId } },
+                  stockId: reqData.stockId,
+                  stockName: reqData.stockName,
+                  shares: reqData.shares,
+                  avgCost: Math.abs(reqData.bookPayment / reqData.shares).toFixed(2),
+                  cost: reqData.bookPayment,
+                  balancePrice: calculateBalancePrice(reqData.bookPayment, reqData.shares, reqData.type == 'ETF'),
                 }
               })
+
+              res.status(201).json(transaction)
             } else {
               console.log('賣')
               res.status(403).json({ error: 'Position not found' })
@@ -113,8 +126,6 @@ export default async function handle(
             res.status(403).json({ error: 'client error' })
           }
         }
-
-        res.status(201).json(transaction);
       } catch (err) {
         console.error(err)
         res.status(500).json({ error: 'Failed to save transaction.' });
