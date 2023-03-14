@@ -9,7 +9,6 @@ import { IconPlus } from '@tabler/icons-react';
 import { ApexOptions } from 'apexcharts';
 import Link from 'next/link';
 import { Card, Col, Container, Row } from 'react-bootstrap';
-import { Cell, Legend, Pie, PieChart } from 'recharts';
 import useSWR from 'swr';
 
 
@@ -215,7 +214,7 @@ const Home = (props: any) => {
                   <div className='d-flex align-items-center'>
                     <div className='d-flex flex-column align-items-center'>
                       <h3>按市值</h3>
-                      <PieChart width={400} height={200}>
+                      {/* <PieChart width={400} height={200}>
                         <Legend layout='vertical' align='right' verticalAlign='middle'></Legend>
                         <Pie
                           data={data_a}
@@ -232,19 +231,22 @@ const Home = (props: any) => {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                      </PieChart>
+                      </PieChart> */}
                     </div>
                   </div>
                 </Card.Body>
               </Card>
             </Col>
 
-            <Col sm={12} lg={6}>
+            <Col sm={12} lg={4}>
               <Card>
+                <Card.Header>
+                  <Card.Title as={'h3'}>持股分布 (產業別)</Card.Title>
+                </Card.Header>
                 <Card.Body>
-                  <div className='d-flex align-items-center'>
+                  {/* <div className='d-flex align-items-center'>
                     <div className='subheader'>持股分布 (產業別)</div>
-                  </div>
+                  </div> */}
                   <div className='d-flex flex-column align-items-center'>
                     <ApexChart
                       options={{ ...defaultOptions, labels: data.map((d) => d.stockName) }}

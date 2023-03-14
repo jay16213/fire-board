@@ -1,45 +1,50 @@
 -- CreateTable
 CREATE TABLE "Stock" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL NOT NULL,
     "stockId" TEXT NOT NULL,
     "stockName" TEXT NOT NULL,
     "industryType" TEXT NOT NULL,
-    "type" TEXT NOT NULL
+    "type" TEXT NOT NULL,
+
+    CONSTRAINT "Stock_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "StockAccount" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL NOT NULL,
     "name" TEXT NOT NULL,
     "minFee" INTEGER NOT NULL,
     "regularFee" INTEGER NOT NULL,
-    "feeDiscount" DECIMAL NOT NULL
+    "feeDiscount" DECIMAL(65,30) NOT NULL,
+
+    CONSTRAINT "StockAccount_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "StockPosition" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "id" SERIAL NOT NULL,
     "stockAccountId" INTEGER NOT NULL,
     "stockId" TEXT NOT NULL,
     "stockName" TEXT NOT NULL,
-    "numOfShares" INTEGER NOT NULL,
-    "avgCost" DECIMAL NOT NULL,
+    "shares" INTEGER NOT NULL,
+    "avgCost" DECIMAL(65,30) NOT NULL,
     "cost" INTEGER NOT NULL,
-    "balancePrice" DECIMAL NOT NULL,
-    CONSTRAINT "StockPosition_stockAccountId_fkey" FOREIGN KEY ("stockAccountId") REFERENCES "StockAccount" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    "balancePrice" DECIMAL(65,30) NOT NULL,
+
+    CONSTRAINT "StockPosition_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "StockTransaction" (
-    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-    "date" DATETIME NOT NULL,
+    "id" SERIAL NOT NULL,
+    "date" TIMESTAMP(3) NOT NULL,
     "stockAccountId" INTEGER NOT NULL,
     "stockId" TEXT NOT NULL,
     "stockName" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "category" TEXT NOT NULL,
     "shares" INTEGER NOT NULL,
-    "price" DECIMAL NOT NULL,
+    "price" DECIMAL(65,30) NOT NULL,
     "amount" INTEGER NOT NULL,
     "fee" INTEGER NOT NULL,
     "feeAfterDiscount" INTEGER NOT NULL,
@@ -47,7 +52,8 @@ CREATE TABLE "StockTransaction" (
     "transactionCost" INTEGER NOT NULL,
     "actualPayment" INTEGER NOT NULL,
     "bookPayment" INTEGER NOT NULL,
-    CONSTRAINT "StockTransaction_stockAccountId_fkey" FOREIGN KEY ("stockAccountId") REFERENCES "StockAccount" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+
+    CONSTRAINT "StockTransaction_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
@@ -55,3 +61,12 @@ CREATE UNIQUE INDEX "Stock_stockId_key" ON "Stock"("stockId");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "StockAccount_name_key" ON "StockAccount"("name");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "StockPosition_stockId_key" ON "StockPosition"("stockId");
+
+-- AddForeignKey
+ALTER TABLE "StockPosition" ADD CONSTRAINT "StockPosition_stockAccountId_fkey" FOREIGN KEY ("stockAccountId") REFERENCES "StockAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "StockTransaction" ADD CONSTRAINT "StockTransaction_stockAccountId_fkey" FOREIGN KEY ("stockAccountId") REFERENCES "StockAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

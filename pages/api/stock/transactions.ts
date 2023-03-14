@@ -134,6 +134,11 @@ export default async function handle(
 
     case 'GET':
       const transactions = await prisma.stockTransaction.findMany({
+        orderBy: [
+          {
+            date: 'desc',
+          },
+        ],
         include: {
           account: {
             select: {
