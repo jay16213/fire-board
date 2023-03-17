@@ -1,4 +1,5 @@
 import { fetcher } from '@/lib/fetcher';
+import { StockPositionResponse } from '@/pages/api/stock/positions';
 import { useState } from 'react';
 import { Card } from 'react-bootstrap';
 import ReactPaginate from 'react-paginate';
@@ -19,14 +20,14 @@ export type StockPosition = {
 }
 
 export type StockPositionCardProps = {
-  positions?: StockPosition[]
+  positions?: StockPositionResponse
 }
 
 const StockPositionCard: React.FC<StockPositionCardProps> = ({ positions }: StockPositionCardProps) => {
   const [currentPage, setCurrentPage] = useState(0)
   const [recordPerPage, setRecordPerPage] = useState(5)
 
-  const { data, error } = useSWR<StockPosition[], Error>(
+  const { data, error } = useSWR<StockPositionResponse, Error>(
     typeof positions === 'undefined' ? '/api/stock/positions' : null,
     fetcher,
     { fallbackData: positions }
@@ -35,9 +36,9 @@ const StockPositionCard: React.FC<StockPositionCardProps> = ({ positions }: Stoc
   if (error) return <div>An error occured.</div>
   if (!data) return <div>Loading ...</div>
 
-  const pageCount = Math.ceil(data.length / recordPerPage)
+  const pageCount = Math.ceil(data.positions.length / recordPerPage)
   const offset = currentPage * recordPerPage;
-  const currentPageData = data ? data.slice(offset, offset + recordPerPage) : [];
+  const currentPageData = data ? data.positions.slice(offset, offset + recordPerPage) : [];
 
   const handlePageClick = ({ selected }: { selected: number }) => {
     setCurrentPage(selected);
@@ -86,24 +87,24 @@ const StockPositionCard: React.FC<StockPositionCardProps> = ({ positions }: Stoc
             </tr>
           </thead>
           <tbody>
-            {currentPageData.map((position: StockPosition, index: number) =>
+            {currentPageData.map((position: any, index: number) =>
               <tr key={index}>
                 {/* <td className='text-center'>{position.account.name}</td> */}
                 <td className='text-center'>{position.stockName}</td>
                 <td className='text-end'>{position.shares}</td>
-                <td className='text-end'>{position.currentPrice}</td>
-                <td className='text-end'>{position.currentPrice}</td>
-                <td className='text-end'>{`${Math.abs(position.cost)} (${Math.abs(position.avgCost)})`}</td>
-                {position.unrealizedGainsLosses > 0
+                <td className='text-end'>{position.price}</td>
+                <td className='text-end'>{position.marketValue}</td>
+                <td className='text-end'>{`${Math.abs(position.cost)} ${position.avgCost}`}</td>
+                {position.unrealizedGainLoss > 0
                   ?
                   <>
-                    <td className='text-end text-red'>{position.unrealizedGainsLosses}</td>
-                    <td className='text-end text-red'>{`${position.unrealizedGainsRatio.toFixed(2)}%`}</td>
+                    <td className='text-end text-red'>{position.unrealizedGainLoss}</td>
+                    <td className='text-end text-red'>{`${position.unrealizedGainLossRatio}%`}</td>
                   </>
                   :
                   <>
-                    <td className='text-end text-green'>{position.unrealizedGainsLosses}</td>
-                    <td className='text-end text-green'>{`${position.unrealizedGainsRatio.toFixed(2)}%`}</td>
+                    <td className='text-end text-green'>{position.unrealizedGainLoss}</td>
+                    <td className='text-end text-green'>{`${position.unrealizedGainLossRatio}%`}</td>
                   </>
                 }
               </tr>

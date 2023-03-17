@@ -1,4 +1,5 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+import { calculateBalancePrice, calculateUnrealizedGainLossRatio } from '@/lib/stock'
 import { Prisma, StockPosition, StockTransaction } from '@prisma/client'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '../../../db/prisma'
@@ -29,7 +30,7 @@ const createTransaction = async (transaction: any) => {
       stockId: transaction.stockId,
       stockName: transaction.stockName,
       type: transaction.type,
-      category: transaction.sellOrBuy,
+      sellOrBuy: transaction.sellOrBuy,
       shares: parseInt(transaction.shares, 10),
       price: parseFloat(transaction.price).toFixed(2),
       amount: parseInt(transaction.amount, 10),
@@ -43,11 +44,6 @@ const createTransaction = async (transaction: any) => {
   })
 
   return savedData
-}
-
-const calculateBalancePrice = (cost: number, shares: number, isEtf: boolean) => {
-  const ratio = isEtf ? (1 - 0.002425) : (1 - 0.004425)
-  return Number(Math.abs(cost) / (shares * ratio)).toFixed(2)
 }
 
 // fetch all stock transactions
@@ -89,7 +85,12 @@ export default async function handle(
           cost = position.cost + transaction.bookPayment // update cost
 
           await prisma.stockPosition.update({
-            where: { stockId: transaction.stockId },
+            where: {
+              stockAccountId_stockId: {
+                stockAccountId: reqData.stockAccountId,
+                stockId: reqData.stockId
+              },
+            },
             data: {
               shares: shares,
               avgCost: Math.abs(cost / shares).toFixed(2),
@@ -107,12 +108,15 @@ export default async function handle(
               await prisma.stockPosition.create({
                 data: {
                   account: { connect: { id: reqData.stockAccountId } },
-                  stockId: reqData.stockId,
-                  stockName: reqData.stockName,
+                  stock: { connect: { id: reqData.stockId } },
                   shares: reqData.shares,
+                  price: 0,
+                  marketValue: Math.round(reqData.shares * 0),
                   avgCost: Math.abs(reqData.bookPayment / reqData.shares).toFixed(2),
                   cost: reqData.bookPayment,
                   balancePrice: calculateBalancePrice(reqData.bookPayment, reqData.shares, reqData.type == 'ETF'),
+                  unrealizedGainLoss: 0,
+                  unrealizedGainLossRatio: calculateUnrealizedGainLossRatio(0, reqData.bookPayment),
                 }
               })
 

@@ -2,6 +2,43 @@ import { PrismaClient } from '@prisma/client'
 import Papa, { ParseResult } from "papaparse"
 import { readFileSync } from 'fs';
 
+// https://schema.gov.tw/lists/23, 證券產業別代碼
+const industryType: { [index: string]: string } = {
+  '01': '水泥工業',
+  '02': '食品工業',
+  '03': '塑膠工業',
+  '04': '紡織纖維',
+  '05': '電機機械',
+  '06': '電器電纜',
+  '08': '玻璃陶瓷',
+  '09': '造紙工業',
+  '10': '鋼鐵工業',
+  '11': '橡膠工業',
+  '12': '汽車工業',
+  '14': '建材營造',
+  '15': '航運業',
+  '16': '觀光事業',
+  '17': '金融保險',
+  '18': '貿易百貨',
+  '19': '綜合',
+  '20': '其他',
+  '21': '化學工業',
+  '22': '生技醫療業',
+  '23': '油電燃氣業',
+  '24': '半導體業',
+  '25': '電腦及週邊設備業',
+  '26': '光電業',
+  '27': '通信網路業',
+  '28': '電子零組件業',
+  '29': '電子通路業',
+  '30': '資訊服務業',
+  '31': '其他電子業',
+  '32': '文化創意業',
+  '33': '農業科技業',
+  '34': '電子商務',
+  '80': '管理股票',
+}
+
 const prisma = new PrismaClient()
 
 async function main() {
@@ -42,7 +79,7 @@ async function main() {
             },
             stockId: transaction['代號'],
             stockName: transaction['股票'],
-            category: transaction['買/賣'],
+            sellOrBuy: transaction['買/賣'],
             type: transaction['交易類別'],
             shares: parseInt(transaction['成交股數'], 10),
             price: parseFloat(transaction['成交價格']).toFixed(2),
@@ -61,6 +98,43 @@ async function main() {
     }
   })
 
+  // 上市公司基本資料
+  const stockInfo = JSON.parse(readFileSync('./prisma/seeds/stock_info.json').toString())
+  stockInfo.map(async (stock: any) => {
+    await prisma.stock.upsert({
+      where: {
+        id: stock['公司代號'],
+      },
+      update: {},
+      create: {
+        id: stock['公司代號'],
+        name: stock['公司簡稱'],
+        industryType: industryType[stock['產業別']] ? industryType[stock['產業別']] : '其他',
+        isEtf: false,
+      },
+    })
+  })
+
+  // 上櫃公司基本資料
+  const stockInfo2 = JSON.parse(readFileSync('./prisma/seeds/stock_info2.json').toString())
+  stockInfo2.map(async (stock: any) => {
+    await prisma.stock.upsert({
+      where: {
+        id: stock['SecuritiesCompanyCode'],
+      },
+      update: {},
+      create: {
+        id: stock['SecuritiesCompanyCode'],
+        name: stock['公司簡稱'],
+        industryType: industryType[stock['SecuritiesIndustryCode']] ? industryType[stock['SecuritiesIndustryCode']] : '其他',
+        isEtf: false,
+      },
+    })
+  })
+
+  // delete all positions
+  await prisma.stockPosition.deleteMany({})
+
   const positionData = readFileSync('./prisma/seeds/position.csv').toString()
   Papa.parse(positionData, {
     header: true,
@@ -73,15 +147,20 @@ async function main() {
             account: {
               connect: { id: sinopac.id },
             },
-            stockId: position['股票代號'],
-            stockName: position['股票名稱'],
+            stock: {
+              connect: { id: position['股票代號'] },
+            },
             shares: parseInt(position['股數'], 10),
+            price: parseFloat(position['現價']),
+            marketValue: parseInt(position['總市值'], 10),
             cost: parseInt(position['持有成本'], 10),
-            avgCost: parseInt(position['平均成本'], 10),
-            balancePrice: parseInt(position['損益平衡價'], 10),
+            avgCost: parseFloat(position['平均成本']).toFixed(2),
+            balancePrice: parseFloat(position['損益平衡價']).toFixed(2),
+            unrealizedGainLoss: parseInt(position['未實現損益'], 10),
+            unrealizedGainLossRatio: parseInt(position['持有成本'], 10) != 0 ? parseFloat(position['獲利率']).toFixed(2) : 0.00,
           }
         }).catch(async (e) => {
-          console.error(e)
+          console.error(`${position['股票代號']} fail\n${e}`)
         })
       })
     }

@@ -1,8 +1,5 @@
-
 const feeRatio: number = 0.001425;
-
 const normalTaxRatio: number = 0.003;
-
 const etfTaxRatio: number = 0.001;
 
 export const calculateStockTransactionFee = (
@@ -30,4 +27,17 @@ export const calculateTax = (shares: number, price: number, isEtf: boolean): num
   } else {
     return Math.round(shares * price * normalTaxRatio)
   }
+}
+
+export const calculateAvgCost = (shares: number, cost: number): string => {
+  return Math.abs(cost / shares).toFixed(2)
+}
+
+export const calculateBalancePrice = (cost: number, shares: number, isEtf: boolean) => {
+  const ratio = isEtf ? (1 - (feeRatio + etfTaxRatio)) : (1 - (feeRatio + normalTaxRatio))
+  return Number(Math.abs(cost) / (shares * ratio)).toFixed(2)
+}
+
+export const calculateUnrealizedGainLossRatio = (unrealizedGainLoss: number, cost: number) => {
+  return Number(Math.abs(unrealizedGainLoss / cost) * 100).toFixed(2)
 }

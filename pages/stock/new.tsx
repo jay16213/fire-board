@@ -1,6 +1,6 @@
 import PageHeader from '@/components/elements/page/PageHeader';
 import { prisma } from '@/db/prisma';
-import { calculateFeeByAmount, calculateStockTransactionFee, calculateTax } from '@/lib/fee';
+import { calculateFeeByAmount, calculateStockTransactionFee, calculateTax } from '@/lib/stock';
 import { IconCalendar } from '@tabler/icons-react';
 import { GetServerSideProps } from 'next';
 import Link from 'next/link';

@@ -5,11 +5,12 @@ import ExDividendRecord from '@/components/ExDividendRecord';
 import StockPositionCard from '@/components/StockPositionCard';
 import TransactionRecordCard from '@/components/TransactionRecordCard';
 import { fetcher } from '@/lib/fetcher';
-import { IconPlus } from '@tabler/icons-react';
+import { IconPlus, IconTrendingUp } from '@tabler/icons-react';
 import { ApexOptions } from 'apexcharts';
 import Link from 'next/link';
 import { Card, Col, Container, Row } from 'react-bootstrap';
 import useSWR from 'swr';
+import { StockPositionModel, StockPositionResponse } from './api/stock/positions';
 
 
 const defult_filter_list: string[] = [
@@ -55,6 +56,15 @@ const defaultOptions: ApexOptions = {
   },
   dataLabels: {
     enabled: true,
+  },
+  theme: {
+    palette: 'palette4',
+    monochrome: {
+      enabled: true,
+      color: '#008FFB',
+      shadeTo: 'light',
+      shadeIntensity: 0.6
+    },
   },
   plotOptions: {
     pie: {
@@ -130,7 +140,7 @@ function timeFilter(filter_list: string[]) {
 }
 
 const Home = (props: any) => {
-  const { data, error } = useSWR<any[], Error>('/api/stock/positions', fetcher)
+  const { data, error } = useSWR<StockPositionResponse, Error>('/api/stock/positions', fetcher)
 
   if (error) return <div>An error occured.</div>
   if (!data) return <div>Loading ...</div>
@@ -171,9 +181,14 @@ const Home = (props: any) => {
                   <div className='d-flex flex-column align-items-center'>
                     <h2>股票總市值</h2>
                   </div>
-                  <div className="d-flex flex-column align-items-center">
-                    <div className="h1 mb-0 me-2">
-                      {`\$${data.reduce((total, position) => total + position.currentValue, 0)}`}
+                  <div className='d-flex justify-content-center align-items-baseline'>
+                    <div className='h1 mb-0 me-2'>
+                      ${data.totalMarketValue.toLocaleString('en-US')}
+                    </div>
+                    <div>
+                      <span className='d-inline-flex align-items-center lh-1 text-muted'>
+                        (持有成本: {Math.abs(data.totalCost).toLocaleString('en-US')})
+                      </span>
                     </div>
                   </div>
                 </Card.Body>
@@ -185,9 +200,14 @@ const Home = (props: any) => {
                   <div className='d-flex flex-column align-items-center'>
                     <h2>未實現損益</h2>
                   </div>
-                  <div className="d-flex flex-column align-items-center">
+                  <div className="d-flex justify-content-center align-items-baseline">
                     <div className="h1 mb-0 me-2">
-                      {`\$${data.reduce((total, position) => total + position.unrealizedGainsLosses, 0)}`}
+                      ${data.totalUnrealizedGainLoss}
+                    </div>
+                    <div>
+                      <span className="text-red d-inline-flex align-items-center lh-1">
+                        {data.totalUnrealizedGainLossRatio}%<IconTrendingUp className='icon ms-1'></IconTrendingUp>
+                      </span>
                     </div>
                   </div>
                 </Card.Body>
@@ -204,34 +224,23 @@ const Home = (props: any) => {
               </Card>
             </Col>
 
-            <Col sm={12} lg={6}>
+            <Col sm={12} lg={4}>
               {/* 圓餅圖 */}
               <Card>
                 <Card.Body>
                   <div className='d-flex flex-column align-items-center'>
-                    <h2>持股分布</h2>
+                    <h2>持股分布 (按市值)</h2>
                   </div>
                   <div className='d-flex align-items-center'>
                     <div className='d-flex flex-column align-items-center'>
-                      <h3>按市值</h3>
-                      {/* <PieChart width={400} height={200}>
-                        <Legend layout='vertical' align='right' verticalAlign='middle'></Legend>
-                        <Pie
-                          data={data_a}
-                          innerRadius={50}
-                          outerRadius={80}
-                          label={renderCustomizedLabel}
-                          labelLine={false}
-                          fill="#8884d8"
-                          paddingAngle={2}
-                          nameKey="name"
-                          dataKey="value"
-                        >
-                          {data_a.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                      </PieChart> */}
+                      {/* <h3>按市值</h3> */}
+                      <ApexChart
+                        options={{ ...defaultOptions, labels: data.positions.map((d) => d.stockName) }}
+                        series={data.positions.map((d) => d.marketValue)}
+                        type='donut'
+                        width={380}
+                      >
+                      </ApexChart>
                     </div>
                   </div>
                 </Card.Body>
@@ -240,17 +249,30 @@ const Home = (props: any) => {
 
             <Col sm={12} lg={4}>
               <Card>
-                <Card.Header>
+                {/* <Card.Header>
                   <Card.Title as={'h3'}>持股分布 (產業別)</Card.Title>
-                </Card.Header>
+                </Card.Header> */}
                 <Card.Body>
-                  {/* <div className='d-flex align-items-center'>
-                    <div className='subheader'>持股分布 (產業別)</div>
-                  </div> */}
+                  <div className='d-flex flex-column align-items-center'>
+                    <h2>持股分布 (產業別)</h2>
+                  </div>
                   <div className='d-flex flex-column align-items-center'>
                     <ApexChart
-                      options={{ ...defaultOptions, labels: data.map((d) => d.stockName) }}
-                      series={data.map((d) => d.currentValue)}
+                      options={{
+                        ...defaultOptions,
+                        labels: data.positions.reduce((acc: string[], position: StockPositionModel) => {
+                          if (!acc.includes(position.industryType)) {
+                            acc.push(position.industryType)
+                          }
+                          return acc
+                        }, [])
+                      }}
+                      series={Array.from(data.positions.reduce((acc: Map<string, number>, position: StockPositionModel) => {
+                        const val = acc.get(position.industryType)
+                        acc.set(position.industryType, val !== undefined ? val + 1 : 1)
+                        // acc[position.industryType] = (acc[position.industryType] || 0) + 1
+                        return acc
+                      }, new Map()).values())}
                       type='donut'
                       width={380}
                     >
