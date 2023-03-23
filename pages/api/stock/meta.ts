@@ -1,17 +1,12 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
+import prisma from '@/db/prisma'
 import { HttpClient } from '@fugle/realtime'
+import { Stock } from '@prisma/client'
 import type { NextApiRequest, NextApiResponse } from 'next'
-// import { prisma } from '../../../db/prisma'
-
-type StockMeta = {
-  name: string,
-  industry: string,
-  type: string,
-}
 
 const FUGLE_API_KEY = process.env.FUGLE_API_KEY ? process.env.FUGLE_API_KEY : ''
 
-export default async function handle(req: NextApiRequest, res: NextApiResponse<any>) {
+export default async function handle(req: NextApiRequest, res: NextApiResponse<Stock | any>) {
   switch (req.method) {
     case 'GET':
       const { stockId } = req.query
@@ -30,11 +25,21 @@ export default async function handle(req: NextApiRequest, res: NextApiResponse<a
   }
 }
 
-async function handleGetMeta(stockId: string | string[]) {
-  const id = typeof stockId === 'string' ? stockId : stockId[0]
-  const fugleClient = new HttpClient({ apiToken: FUGLE_API_KEY })
-
+const handleGetMeta = async (stockId: string | string[]) => {
   try {
+    const id = typeof stockId === 'string' ? stockId : stockId[0]
+
+    const data = await prisma.stock.findUnique({
+      where: {
+        id: id,
+      }
+    })
+
+    if (data != null) {
+      return data
+    }
+
+    const fugleClient = new HttpClient({ apiToken: FUGLE_API_KEY })
     const res = await fugleClient.intraday.meta({ symbolId: id })
     console.log(res)
 
@@ -43,9 +48,10 @@ async function handleGetMeta(stockId: string | string[]) {
     } else {
       const data = res.data
       return {
+        id: id,
         name: data.meta.nameZhTw,
-        industry: data.meta.industryZhTw,
-        type: data.meta.typeZhTw
+        industryType: data.meta.industryZhTw,
+        isEtf: data.meta.typeZhTw == 'ETF'
       }
     }
   } catch (err) {

@@ -73,7 +73,7 @@ const defaultOptions: ApexOptions = {
   }
 }
 
-export const AssetTrendCard = (props: AssetTrendCardProps) => {
+export const AssetTrendCard: React.FC<AssetTrendCardProps> = (props: AssetTrendCardProps) => {
   const { apexOptions = defaultOptions, width = 600 } = props;
 
   return (
@@ -81,7 +81,6 @@ export const AssetTrendCard = (props: AssetTrendCardProps) => {
       <Card.Body>
         <div className='d-flex align-items-center'>
           <h2>資產市值趨勢變化</h2>
-          {/* {timeFilter(defult_filter_list)} */}
         </div>
         <div className='d-flex flex-column align-items-center'>
           <ApexChart

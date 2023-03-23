@@ -39,5 +39,13 @@ export const calculateBalancePrice = (cost: number, shares: number, isEtf: boole
 }
 
 export const calculateUnrealizedGainLossRatio = (unrealizedGainLoss: number, cost: number) => {
-  return Number(Math.abs(unrealizedGainLoss / cost) * 100).toFixed(2)
+  return Number((unrealizedGainLoss / Math.abs(cost)) * 100).toFixed(2)
+}
+
+export const calculateCashDividendPayable = (shares: number, dividend: number) => {
+  return Math.round(shares * dividend)
+}
+
+export const calculateStockDividendPayable = (shares: number, dividend: number) => {
+  return Math.floor(shares * dividend)
 }

@@ -1,79 +1,118 @@
-import { Component } from 'react'
+import { fetcher } from '@/lib/fetcher';
+import { StockExDividendRecord } from '@prisma/client';
+import moment from 'moment';
+import { useState } from 'react';
+import { Card } from 'react-bootstrap';
+import ReactPaginate from 'react-paginate';
+import useSWR from 'swr';
 
-const record = [
-  {
-    date: "2022/01/06",
-    account: "永豐金",
-    stock_id: "006208",
-    stock_name: "富邦台灣50",
-    shares: "100",
-    cash_dividend: "2",
-    stock_dividend: "1",
-  },
-  {
-    date: "2022/07/06",
-    account: "永豐金",
-    stock_id: "0050",
-    stock_name: "台灣50",
-    shares: "100",
-    cash_dividend: "1",
-    stock_dividend: "1",
-  },
-  {
-    date: "2022/01/06",
-    account: "永豐金",
-    stock_id: "006208",
-    stock_name: "富邦台灣50",
-    shares: "100",
-    cash_dividend: "2",
-    stock_dividend: "1",
-  },
-  {
-    date: "2022/01/06",
-    account: "永豐金",
-    stock_id: "006208",
-    stock_name: "富邦台灣50",
-    shares: "100",
-    cash_dividend: "2",
-    stock_dividend: "1",
-  },
+export type ExDividendRecordCardProps = {
+  dividendRecords?: StockExDividendRecord[]
+  headers?: string[]
+  pagination?: boolean
+}
+
+const defaultHeaders = [
+  '除權息日期',
+  '股票名稱',
+  '持有股數',
+  '實領現金',
+  '實領股票',
 ]
 
-export default class ExDividendRecord extends Component {
-  render() {
-    return (
+const ExDividendRecordCard: React.FC<ExDividendRecordCardProps> = (
+  { dividendRecords, headers = defaultHeaders, pagination = true }: ExDividendRecordCardProps
+) => {
+  const [currentPage, setCurrentPage] = useState(0)
+  const [recordPerPage, setRecordPerPage] = useState(5)
+
+  const { data, error } = useSWR<StockExDividendRecord[], Error>(
+    typeof dividendRecords === 'undefined' ? '/api/stock/dividends' : null,
+    fetcher,
+    { fallbackData: dividendRecords }
+  )
+
+  if (error) return <div>An error occured.</div>
+  if (!data) return <div>Loading ...</div>
+
+  const pageCount = Math.ceil(data.length / recordPerPage)
+  const offset = currentPage * recordPerPage;
+  const currentPageData = data ? data.slice(offset, offset + recordPerPage) : [];
+
+  const handlePageClick = ({ selected }: { selected: number }) => {
+    setCurrentPage(selected);
+  }
+
+  const handleRecordPerPageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRecordPerPage(parseInt(event.target.value, 10))
+  }
+
+  return (
+    <Card>
+      <Card.Header>
+        <Card.Title as={'h3'}>除權息紀錄</Card.Title>
+      </Card.Header>
+      <Card.Body className='border-bottom py-3'>
+        <div className="d-flex">
+          <div className="text-muted">
+            一頁顯示
+            <div className="mx-2 d-inline-block w-25">
+              <input type="number" className="form-control form-control-sm" value={recordPerPage} onChange={handleRecordPerPageChange}>
+              </input>
+            </div>
+            筆
+          </div>
+        </div>
+      </Card.Body>
+
       <div className="table-responsive">
         <table className="table card-table table-vcenter text-nowrap datatable">
           <thead>
             <tr className='text-center'>
-              <th className="w-1">日期
-                <svg xmlns="http://www.w3.org/2000/svg" className="icon icon-sm icon-thick" width="24" height="24" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" fill="none" strokeLinecap="round" strokeLinejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M6 15l6 -6l6 6"></path></svg>
-              </th>
-              {/* <th>股票帳戶</th> */}
-              <th>股票名稱</th>
-              <th>持有股數</th>
-              <th>現金股利</th>
-              <th>股票股利</th>
-              <th>實領現金股利</th>
-              <th>實領股票股利</th>
+              {headers.map((f: string, index: number) => <th key={index} className={f === headers[0] ? '' : 'text-end'}>{f}</th>)}
             </tr>
           </thead>
           <tbody>
-            {record.map((data, index) =>
+            {currentPageData.map((record: StockExDividendRecord, index: number) =>
               <tr key={index}>
-                <td className='text-center'><span className="text-muted">{data.date}</span></td>
-                {/* <td className='text-center'><a href="#" className="text-reset" tabIndex={-1}>{data.account}</a></td> */}
-                <td className='text-center'>{data.stock_name}</td>
-                <td className='text-end'>{data.shares}</td>
-                <td className='text-end'>{data.cash_dividend}</td>
-                <td className='text-end'>{data.stock_dividend}</td>
-                <td className='text-end'>{data.cash_dividend}</td>
-                <td className='text-end'>{data.stock_dividend}</td>
+                <td className='text-center'>{moment(record.exDividendDate).format('YYYY.MM.DD')}</td>
+                <td className='text-end'>{record.stockId}</td>
+                <td className='text-end'>{record.shares}</td>
+                <td className='text-end'>{record.cashActualPayment}</td>
+                <td className='text-end'>{record.stockActualPayment}</td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
-    )
-  }
+
+      <Card.Footer className='d-flex align-items-center'>
+        {pagination &&
+          <>
+            <p className="m-0 text-muted">
+              顯示第 <span>{`${currentPage * recordPerPage + 1}`}</span> - <span>{`${currentPage * recordPerPage + recordPerPage}`}</span> 筆庫存
+            </p>
+            <ReactPaginate
+              previousLabel={'< prev'}
+              nextLabel={'next >'}
+              pageCount={pageCount}
+              pageRangeDisplayed={5}
+              marginPagesDisplayed={2}
+              onPageChange={handlePageClick}
+              containerClassName={'pagination m-0 ms-auto'}
+              previousClassName={'page-item'}
+              previousLinkClassName={'page-link'}
+              pageClassName={'page-item'}
+              pageLinkClassName={'page-link'}
+              nextClassName={'page-item'}
+              nextLinkClassName={'page-link'}
+              activeClassName={'active'}
+            />
+          </>
+        }
+      </Card.Footer>
+    </Card >
+  )
 }
+
+export default ExDividendRecordCard

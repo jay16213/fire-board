@@ -4,11 +4,13 @@ import PageHeader from '@/components/elements/page/PageHeader';
 import ExDividendRecord from '@/components/ExDividendRecord';
 import StockPositionCard from '@/components/StockPositionCard';
 import TransactionRecordCard from '@/components/TransactionRecordCard';
-import { IconPlus } from '@tabler/icons-react';
+import { fetcher } from '@/lib/fetcher';
+import { StockPositionModel, StockPositionResponse } from '@/pages/api/stock/positions';
+import { IconPlus, IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
 import { ApexOptions } from 'apexcharts';
 import Link from 'next/link';
 import { Card, Col, Container, Row } from 'react-bootstrap';
-import { Cell, Legend, Pie, PieChart } from 'recharts';
+import useSWR from 'swr';
 
 const defult_filter_list: string[] = [
   'Last 7 days',
@@ -38,8 +40,7 @@ const renderCustomizedLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, per
   );
 };
 
-const series = [44, 55, 41, 17, 15]
-const options: ApexOptions = {
+const defaultOptions: ApexOptions = {
   chart: {
     type: 'donut',
     height: 300,
@@ -55,12 +56,21 @@ const options: ApexOptions = {
   dataLabels: {
     enabled: true,
   },
+  theme: {
+    palette: 'palette4',
+    monochrome: {
+      enabled: true,
+      color: '#008FFB',
+      shadeTo: 'light',
+      shadeIntensity: 0.6
+    },
+  },
   plotOptions: {
     pie: {
       donut: {
         size: '65%',
         labels: {
-          show: true,
+          show: false,
           // name: {
           //   show: true,
           // },
@@ -86,31 +96,6 @@ const options: ApexOptions = {
     show: true,
     position: 'right',
   },
-  /*
-  responsive: [{
-    breakpoint: 480,
-    options: {
-      chart: {
-        height: 250,
-        width: 400
-      },
-      legend: {
-        show: true,
-        position: 'bottom',
-        offsetY: 12,
-        markers: {
-          width: 10,
-          height: 10,
-          radius: 100,
-        },
-        itemMargin: {
-          horizontal: 8,
-          vertical: 8
-        },
-      },
-    }
-  }]
-  */
 }
 
 function timeFilter(filter_list: string[]) {
@@ -128,8 +113,12 @@ function timeFilter(filter_list: string[]) {
   )
 }
 
-// export default class Home extends Component<HomeProps, HomeState> {
 const StockPage = (props: any) => {
+  const { data, error } = useSWR<StockPositionResponse, Error>('/api/stock/positions', fetcher)
+
+  if (error) return <div>An error occured.</div>
+  if (!data) return <div>Loading ...</div>
+
   return (
     <>
       <PageHeader preTitle='Overview' title='股票資產'>
@@ -148,31 +137,76 @@ const StockPage = (props: any) => {
       <div className="page-body">
         <Container fluid='xl'>
           <Row className='row-deck row-cards'>
-            <Col sm={6} lg={3}>
+            <Col sm={12} lg={3}>
               <Card>
                 <Card.Body>
                   <div className='d-flex flex-column align-items-center'>
                     <h2>股票總市值</h2>
                   </div>
-                  <div className="d-flex flex-column align-items-center">
-                    <div className="h1 mb-0 me-2">$1,000,000</div>
+                  <div className='d-flex justify-content-center align-items-baseline'>
+                    <div className='h1 mb-0 me-2'>
+                      ${data.totalMarketValue.toLocaleString('en-US')}
+                    </div>
+                    <div>
+                      <span className='d-inline-flex align-items-center lh-1 text-muted'>
+                        (持有成本: {Math.abs(data.totalCost).toLocaleString('en-US')})
+                      </span>
+                    </div>
                   </div>
                 </Card.Body>
               </Card>
             </Col>
-            <Col sm={6} lg={3}>
+
+            <Col sm={12} lg={3}>
               <Card>
                 <Card.Body>
                   <div className='d-flex flex-column align-items-center'>
                     <h2>未實現損益</h2>
                   </div>
-                  <div className="d-flex flex-column align-items-center">
-                    <div className="h1 mb-0 me-2">$1,000,000</div>
+                  <div className="d-flex justify-content-center align-items-baseline">
+                    <div className="h1 mb-0 me-2">
+                      ${data.totalUnrealizedGainLoss.toLocaleString()}
+                    </div>
+                    <div className='d-inline-flex align-items-center lh-1'>
+                      {data.totalUnrealizedGainLoss > 0
+                        ?
+                        <span className='text-red'>
+                          {data.totalUnrealizedGainLossRatio}%<IconTrendingUp className='icon ms-1'></IconTrendingUp>
+                        </span>
+                        :
+                        <span className='text-green'>
+
+                          {data.totalUnrealizedGainLossRatio}%<IconTrendingDown className='icon ms-1'></IconTrendingDown>
+                        </span>
+                      }
+                    </div>
                   </div>
                 </Card.Body>
               </Card>
             </Col>
-            <Col sm={6} lg={3}>
+
+            <Col sm={12} lg={3}>
+              <Card>
+                <Card.Body>
+                  <div className='d-flex align-items-center'>
+                    <div className='subheader'>最近交易</div>
+                    {timeFilter(defult_filter_list)}
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col sm={12} lg={3}>
+              <Card>
+                <Card.Body>
+                  <div className='d-flex align-items-center'>
+                    <div className='subheader'>除權息日曆</div>
+                    {timeFilter(defult_filter_list)}
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+
+            <Col sm={12} lg={3}>
               <Card>
                 <Card.Body>
                   <div className='d-flex align-items-center'>
@@ -183,61 +217,65 @@ const StockPage = (props: any) => {
               </Card>
             </Col>
 
-            <Col sm={12} lg={6}>
+            <Col sm={12} lg={4}>
               {/* 圓餅圖 */}
               <Card>
                 <Card.Body>
                   <div className='d-flex flex-column align-items-center'>
-                    <h2>持股分布</h2>
+                    <h2>持股分布 (按市值)</h2>
                   </div>
                   <div className='d-flex align-items-center'>
                     <div className='d-flex flex-column align-items-center'>
-                      <h3>按市值</h3>
-                      <PieChart width={400} height={200}>
-                        <Legend layout='vertical' align='right' verticalAlign='middle'></Legend>
-                        <Pie
-                          data={data}
-                          innerRadius={50}
-                          outerRadius={80}
-                          label={renderCustomizedLabel}
-                          labelLine={false}
-                          fill="#8884d8"
-                          paddingAngle={2}
-                          nameKey="name"
-                          dataKey="value"
-                        >
-                          {/* <LabelList dataKey={'name'} position='inside'></LabelList> */}
-                          {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                      </PieChart>
+                      <ApexChart
+                        options={{ ...defaultOptions, labels: data.positions.map((d) => d.stockName) }}
+                        series={data.positions.map((d) => d.marketValue)}
+                        type='donut'
+                        width={380}
+                      >
+                      </ApexChart>
                     </div>
                   </div>
                 </Card.Body>
               </Card>
             </Col>
 
-            <Col sm={12} lg={6}>
+            <Col sm={12} lg={4}>
               <Card>
                 <Card.Body>
-                  <div className='d-flex align-items-center'>
-                    <div className='subheader'>持股分布 (產業別)</div>
+                  <div className='d-flex flex-column align-items-center'>
+                    <h2>持股分布 (按產業別)</h2>
                   </div>
                   <div className='d-flex flex-column align-items-center'>
-                    <ApexChart options={options} series={series} type='donut' width={400}>
+                    <ApexChart
+                      options={{
+                        ...defaultOptions,
+                        labels: data.positions.reduce((acc: string[], position: StockPositionModel) => {
+                          if (!acc.includes(position.industryType)) {
+                            acc.push(position.industryType)
+                          }
+                          return acc
+                        }, [])
+                      }}
+                      series={Array.from(data.positions.reduce((acc: Map<string, number>, position: StockPositionModel) => {
+                        const val = acc.get(position.industryType)
+                        acc.set(position.industryType, val !== undefined ? val + position.marketValue : position.marketValue)
+                        return acc
+                      }, new Map()).values())}
+                      type='donut'
+                      width={400}
+                    >
                     </ApexChart>
                   </div>
                 </Card.Body>
               </Card>
             </Col>
 
-            <Col sm={12} lg={6}>
-              <AssetTrendCard></AssetTrendCard>
+            <Col sm={12} lg={12}>
+              <StockPositionCard></StockPositionCard>
             </Col>
 
             <Col sm={12} lg={6}>
-              <StockPositionCard></StockPositionCard>
+              <AssetTrendCard></AssetTrendCard>
             </Col>
 
             <Col sm={12} lg={6}>

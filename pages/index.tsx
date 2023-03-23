@@ -1,12 +1,14 @@
 import { AssetTrendCard } from '@/components/AssetTrendCard';
 import ApexChart from '@/components/elements/ApexChart';
 import PageHeader from '@/components/elements/page/PageHeader';
-import ExDividendRecord from '@/components/ExDividendRecord';
+import ExDividendRecordCard from '@/components/ExDividendRecord';
 import StockPositionCard from '@/components/StockPositionCard';
 import TransactionRecordCard from '@/components/TransactionRecordCard';
 import { fetcher } from '@/lib/fetcher';
-import { IconPlus, IconTrendingUp } from '@tabler/icons-react';
+import { StockExDividendRecord } from '@prisma/client';
+import { IconPlus, IconTrendingDown, IconTrendingUp } from '@tabler/icons-react';
 import { ApexOptions } from 'apexcharts';
+import moment from 'moment';
 import Link from 'next/link';
 import { Card, Col, Container, Row } from 'react-bootstrap';
 import useSWR from 'swr';
@@ -141,9 +143,16 @@ function timeFilter(filter_list: string[]) {
 
 const Home = (props: any) => {
   const { data, error } = useSWR<StockPositionResponse, Error>('/api/stock/positions', fetcher)
+  const { data: dividendRecords, error: dividendRecordsErr } = useSWR<StockExDividendRecord[], Error>('/api/stock/dividends', fetcher)
 
-  if (error) return <div>An error occured.</div>
-  if (!data) return <div>Loading ...</div>
+  if (error || dividendRecordsErr) {
+    console.log(error)
+    console.log(dividendRecordsErr)
+    return <div>An error occured.</div>
+  }
+  if (!data || !dividendRecords) return <div>Loading ...</div>
+
+  const thisYearDividendRecords = dividendRecords.filter(record => moment(record.dividendPayDate).year() == moment().year())
 
   return (
     <>
@@ -151,9 +160,13 @@ const Home = (props: any) => {
         {/* Page title actions */}
         <div className="col-auto ms-auto">
           <div className="btn-list">
-            <Link href="/stock/new" className="btn btn-primary d-none d-sm-inline-block">
+            <Link href="/stock/new" className="btn btn-success d-none d-sm-inline-block">
               <IconPlus className='icon'></IconPlus>
               新增交易
+            </Link>
+            <Link href="/stock/dividend/new" className="btn btn-primary d-none d-sm-inline-block">
+              <IconPlus className='icon'></IconPlus>
+              新增除權息
             </Link>
           </div>
         </div>
@@ -204,10 +217,17 @@ const Home = (props: any) => {
                     <div className="h1 mb-0 me-2">
                       ${data.totalUnrealizedGainLoss}
                     </div>
-                    <div>
-                      <span className="text-red d-inline-flex align-items-center lh-1">
-                        {data.totalUnrealizedGainLossRatio}%<IconTrendingUp className='icon ms-1'></IconTrendingUp>
-                      </span>
+                    <div className='d-inline-flex align-items-center lh-1'>
+                      {data.totalUnrealizedGainLoss > 0
+                        ?
+                        <span className='text-red'>
+                          {data.totalUnrealizedGainLossRatio}%<IconTrendingUp className='icon ms-1'></IconTrendingUp>
+                        </span>
+                        :
+                        <span className='text-green'>
+                          {data.totalUnrealizedGainLossRatio}%<IconTrendingDown className='icon ms-1'></IconTrendingDown>
+                        </span>
+                      }
                     </div>
                   </div>
                 </Card.Body>
@@ -217,10 +237,25 @@ const Home = (props: any) => {
               <Card>
                 <Card.Body>
                   <div className='d-flex align-items-center'>
-                    <div className='subheader'>已領股利</div>
-                    {timeFilter(defult_filter_list)}
+                    <div className='subheader'>今年已領股利</div>
+                    {/* {timeFilter(defult_filter_list)} */}
                   </div>
                 </Card.Body>
+                <div className="d-flex justify-content-around align-items-baseline mb-2">
+                  <div className='d-inline-flex align-items-baseline'>
+                    <h1 className='ms-4'>
+                      ${thisYearDividendRecords.reduce((sum, record) => sum += record.cashActualPayment, 0).toLocaleString()}
+                    </h1>
+                    {/* <span className='ms-2'>現金</span> */}
+                  </div>
+                  <div className='vr mx-auto'></div>
+                  <div className='d-inline-flex align-items-baseline'>
+                    <h1>
+                      {thisYearDividendRecords.reduce((sum, record) => sum += record.stockActualPayment, 0)}
+                    </h1>
+                    <span className='ms-2 me-4'>股</span>
+                  </div>
+                </div>
               </Card>
             </Col>
 
@@ -233,7 +268,6 @@ const Home = (props: any) => {
                   </div>
                   <div className='d-flex align-items-center'>
                     <div className='d-flex flex-column align-items-center'>
-                      {/* <h3>按市值</h3> */}
                       <ApexChart
                         options={{ ...defaultOptions, labels: data.positions.map((d) => d.stockName) }}
                         series={data.positions.map((d) => d.marketValue)}
@@ -249,12 +283,9 @@ const Home = (props: any) => {
 
             <Col sm={12} lg={4}>
               <Card>
-                {/* <Card.Header>
-                  <Card.Title as={'h3'}>持股分布 (產業別)</Card.Title>
-                </Card.Header> */}
                 <Card.Body>
                   <div className='d-flex flex-column align-items-center'>
-                    <h2>持股分布 (產業別)</h2>
+                    <h2>持股分布 (按產業別)</h2>
                   </div>
                   <div className='d-flex flex-column align-items-center'>
                     <ApexChart
@@ -269,8 +300,7 @@ const Home = (props: any) => {
                       }}
                       series={Array.from(data.positions.reduce((acc: Map<string, number>, position: StockPositionModel) => {
                         const val = acc.get(position.industryType)
-                        acc.set(position.industryType, val !== undefined ? val + 1 : 1)
-                        // acc[position.industryType] = (acc[position.industryType] || 0) + 1
+                        acc.set(position.industryType, val !== undefined ? val + position.marketValue : position.marketValue)
                         return acc
                       }, new Map()).values())}
                       type='donut'
@@ -291,14 +321,8 @@ const Home = (props: any) => {
             </Col>
 
             <Col sm={12} lg={6}>
-              <Card>
-                <Card.Header>
-                  <Card.Title as={'h3'}>最近除權息</Card.Title>
-                </Card.Header>
-                <Card.Body>
-                  <ExDividendRecord></ExDividendRecord>
-                </Card.Body>
-              </Card>
+
+              <ExDividendRecordCard></ExDividendRecordCard>
             </Col>
 
             {/* stock transaction */}
@@ -307,7 +331,7 @@ const Home = (props: any) => {
             </Col>
           </Row>
         </Container>
-      </div > {/* end of page-body */}
+      </div> {/* end of page-body */}
     </>
   )
 }

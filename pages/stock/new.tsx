@@ -4,7 +4,7 @@ import { calculateFeeByAmount, calculateStockTransactionFee, calculateTax } from
 import { IconCalendar } from '@tabler/icons-react';
 import { GetServerSideProps } from 'next';
 import Link from 'next/link';
-import React from 'react';
+import React, { useState } from 'react';
 import { Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import DatePicker from 'react-datepicker';
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
@@ -27,7 +27,7 @@ type TransactionData = {
   tax: number
 }
 
-type Props = {
+type StockNewTransactionFormProps = {
   stockAccountList: {
     id: number,
     name: string,
@@ -37,7 +37,7 @@ type Props = {
   }[]
 }
 
-const StockNewTransactionForm: React.FC<Props> = ({ stockAccountList }: Props) => {
+const StockNewTransactionForm: React.FC<StockNewTransactionFormProps> = ({ stockAccountList }: StockNewTransactionFormProps) => {
   const router = useRouter()
   const { control, register, handleSubmit, watch, getValues, setValue, formState: { errors } } = useForm<TransactionData>({
     defaultValues: {
@@ -55,6 +55,8 @@ const StockNewTransactionForm: React.FC<Props> = ({ stockAccountList }: Props) =
       tax: 0
     }
   });
+
+  const [discountDisplay, setDiscountDisplay] = useState('')
 
   const onSubmit: SubmitHandler<TransactionData> = async (data, event) => {
     // Stop the form from submitting and refreshing the page.
@@ -76,7 +78,7 @@ const StockNewTransactionForm: React.FC<Props> = ({ stockAccountList }: Props) =
     if (res.status != 201) {
       alert('錯誤')
     } else {
-      router.push('/stock')
+      router.back()
     }
   }
 
@@ -99,12 +101,21 @@ const StockNewTransactionForm: React.FC<Props> = ({ stockAccountList }: Props) =
     }
   }
 
+  const handleAccountChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const id = parseInt(event.target.value)
+    const account = stockAccountList.find((a) => a.id == id)
+
+    if (account) {
+      setDiscountDisplay(`(${(account.feeDiscount * 10)}折)`)
+    }
+  }
+
   const updateFields = (shares: number, price: number) => {
     const sellOrBuy = getValues('sellOrBuy')
     const stockType = getValues('type')
-    const account = stockAccountList[getValues('accountId')]
+    const account = stockAccountList.find((a) => a.id == getValues('accountId'))
 
-    if (!Number.isNaN(shares) && !Number.isNaN(price)) {
+    if (account && !Number.isNaN(shares) && !Number.isNaN(price)) {
       let amount = Math.round(shares * price)
       let { fee, feeAfterDiscount } = calculateStockTransactionFee(shares, price, account.feeDiscount, account.minFee)
 
@@ -135,9 +146,9 @@ const StockNewTransactionForm: React.FC<Props> = ({ stockAccountList }: Props) =
 
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const amount = event.target.valueAsNumber
-    const account = stockAccountList[getValues('accountId')]
+    const account = stockAccountList.find((a) => a.id == getValues('accountId'))
 
-    if (!Number.isNaN(amount)) {
+    if (account && !Number.isNaN(amount)) {
       let { fee, feeAfterDiscount } = calculateFeeByAmount(amount, account.feeDiscount, account.minFee)
 
       setValue('fee', fee)
@@ -194,7 +205,7 @@ const StockNewTransactionForm: React.FC<Props> = ({ stockAccountList }: Props) =
 
                       <Form.Group className='col-lg-2'>
                         <Form.Label>交易帳戶</Form.Label>
-                        <Form.Select {...register('accountId')}>
+                        <Form.Select {...register('accountId', { required: true })} onChange={handleAccountChange}>
                           {stockAccountList.map((account, index) =>
                             <option key={index} value={account.id}>{account.name}</option>
                           )}
@@ -268,7 +279,9 @@ const StockNewTransactionForm: React.FC<Props> = ({ stockAccountList }: Props) =
                       </Form.Group>
 
                       <Form.Group className='col-lg-2'>
-                        <Form.Label>折讓後手續費</Form.Label>
+                        <Form.Label>
+                          折讓後手續費 {discountDisplay}
+                        </Form.Label>
                         <Form.Control placeholder='折扣後手續費'
                           type='number'
                           {...register('feeAfterDiscount', { required: true })}

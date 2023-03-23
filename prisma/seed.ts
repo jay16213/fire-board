@@ -132,8 +132,31 @@ async function main() {
     })
   })
 
-  // delete all positions
-  await prisma.stockPosition.deleteMany({})
+  // etf TODO
+  const etf_list = readFileSync('./prisma/seeds/etf_list.csv').toString()
+  Papa.parse(etf_list, {
+    header: true,
+    skipEmptyLines: true,
+    delimiter: ',',
+    complete: (results: ParseResult<any>, file) => {
+      results.data.map(async (stock, index) => {
+        await prisma.stock.upsert({
+          where: {
+            id: stock['基金代號'],
+          },
+          update: {},
+          create: {
+            id: stock['基金代號'],
+            name: stock['基金代號'],
+            industryType: 'ETF',
+            isEtf: false,
+          },
+        }).catch(async (e) => {
+          console.error(e)
+        })
+      })
+    }
+  })
 
   const positionData = readFileSync('./prisma/seeds/position.csv').toString()
   Papa.parse(positionData, {
@@ -142,14 +165,17 @@ async function main() {
     delimiter: ',',
     complete: (results: ParseResult<any>, file) => {
       results.data.map(async (position, index) => {
-        await prisma.stockPosition.create({
-          data: {
-            account: {
-              connect: { id: sinopac.id },
-            },
-            stock: {
-              connect: { id: position['股票代號'] },
-            },
+        await prisma.stockPosition.upsert({
+          where: {
+            stockAccountId_stockId: {
+              stockAccountId: sinopac.id,
+              stockId: position['股票代號'],
+            }
+          },
+          update: {},
+          create: {
+            account: { connect: { id: sinopac.id }, },
+            stock: { connect: { id: position['股票代號'] }, },
             shares: parseInt(position['股數'], 10),
             price: parseFloat(position['現價']),
             marketValue: parseInt(position['總市值'], 10),
@@ -161,6 +187,39 @@ async function main() {
           }
         }).catch(async (e) => {
           console.error(`${position['股票代號']} fail\n${e}`)
+        })
+      })
+    }
+  })
+
+  await prisma.stockExDividendRecord.deleteMany({})
+
+  const dividendData = readFileSync('./prisma/seeds/dividend.csv').toString()
+  Papa.parse(dividendData, {
+    header: true,
+    skipEmptyLines: true,
+    delimiter: ',',
+    complete: (results: ParseResult<any>, file) => {
+      results.data.map(async (record, index) => {
+        await prisma.stockExDividendRecord.create({
+          data: {
+            exDividendDate: new Date(record['除(權)息日期']),
+            dividendPayDate: new Date(record['股利發放日期']),
+            account: { connect: { id: record['帳戶'] == '永豐' ? sinopac.id : fugle.id } },
+            stock: { connect: { id: record['代號'] }, },
+            shares: parseInt(record['持有股數']),
+            cashDividend: parseFloat(record['現金股利']).toFixed(3),
+            cashDividendPayable: parseInt(record['應付金額']),
+            stockDividend: parseFloat(record['股票股利']).toFixed(3),
+            stockDividendPayable: parseInt(record['應發股數']),
+            tax: parseInt(record['稅']),
+            healthInsurance: parseInt(record['補充保費']),
+            fee: parseInt(record['匯費']),
+            cashActualPayment: parseInt(record['實領金額']),
+            stockActualPayment: parseInt(record['實領股數']),
+          }
+        }).catch(async (e) => {
+          console.error(`${record['除(權)息日期']} fail\n${e}`)
         })
       })
     }

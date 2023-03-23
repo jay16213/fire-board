@@ -1,29 +1,31 @@
 import { fetcher } from '@/lib/fetcher';
-import { StockPositionResponse } from '@/pages/api/stock/positions';
+import { StockPositionModel, StockPositionResponse } from '@/pages/api/stock/positions';
 import { useState } from 'react';
 import { Card } from 'react-bootstrap';
 import ReactPaginate from 'react-paginate';
 import useSWR from 'swr';
 
-export type StockPosition = {
-  // account: {
-  //   name: string
-  // }
-  stockId: string
-  stockName: string
-  shares: number
-  currentPrice: number
-  cost: number
-  avgCost: number
-  unrealizedGainsLosses: number
-  unrealizedGainsRatio: number
-}
-
 export type StockPositionCardProps = {
   positions?: StockPositionResponse
+  searchField?: boolean
+  fields?: string[]
 }
 
-const StockPositionCard: React.FC<StockPositionCardProps> = ({ positions }: StockPositionCardProps) => {
+const defaultFields = [
+  '股票名稱',
+  '持有股數',
+  '現價',
+  '市值',
+  '持有成本',
+  '平均成本',
+  '損益平衡價',
+  '未實現損益',
+  '獲利率',
+]
+
+const StockPositionCard: React.FC<StockPositionCardProps> = (
+  { positions, searchField = false, fields = defaultFields }: StockPositionCardProps
+) => {
   const [currentPage, setCurrentPage] = useState(0)
   const [recordPerPage, setRecordPerPage] = useState(5)
 
@@ -63,12 +65,14 @@ const StockPositionCard: React.FC<StockPositionCardProps> = ({ positions }: Stoc
             </div>
             筆
           </div>
-          <div className="ms-auto text-muted">
-            搜尋
-            <div className="ms-2 d-inline-block">
-              <input type="text" className="form-control form-control-sm" aria-label="Search invoice"></input>
+          {searchField &&
+            <div className="ms-auto text-muted">
+              搜尋
+              <div className="ms-2 d-inline-block">
+                <input type="text" className="form-control form-control-sm" aria-label="Search invoice"></input>
+              </div>
             </div>
-          </div>
+          }
         </div>
       </Card.Body>
 
@@ -76,25 +80,19 @@ const StockPositionCard: React.FC<StockPositionCardProps> = ({ positions }: Stoc
         <table className="table card-table table-vcenter text-nowrap datatable">
           <thead>
             <tr className='text-center'>
-              {/* <th>股票帳戶</th> */}
-              <th>股票名稱</th>
-              <th>持有股數</th>
-              <th>現價</th>
-              <th>市值</th>
-              <th>持有成本 (平均成本)</th>
-              <th>未實現損益</th>
-              <th>獲利率</th>
+              {fields.map((f: string, index: number) => <th key={index} className={f === fields[0] ? '' : 'text-end'}>{f}</th>)}
             </tr>
           </thead>
           <tbody>
-            {currentPageData.map((position: any, index: number) =>
+            {currentPageData.map((position: StockPositionModel, index: number) =>
               <tr key={index}>
-                {/* <td className='text-center'>{position.account.name}</td> */}
                 <td className='text-center'>{position.stockName}</td>
                 <td className='text-end'>{position.shares}</td>
                 <td className='text-end'>{position.price}</td>
-                <td className='text-end'>{position.marketValue}</td>
-                <td className='text-end'>{`${Math.abs(position.cost)} ${position.avgCost}`}</td>
+                <td className='text-end'>{position.marketValue.toLocaleString()}</td>
+                <td className='text-end'>{Math.abs(position.cost).toLocaleString()}</td>
+                <td className='text-end'>{position.avgCost}</td>
+                <td className='text-end'>{position.balancePrice}</td>
                 {position.unrealizedGainLoss > 0
                   ?
                   <>
@@ -124,7 +122,7 @@ const StockPositionCard: React.FC<StockPositionCardProps> = ({ positions }: Stoc
           pageRangeDisplayed={5}
           marginPagesDisplayed={2}
           onPageChange={handlePageClick}
-          containerClassName={'pagination m0 ms-auto'}
+          containerClassName={'pagination m-0 ms-auto'}
           previousClassName={'page-item'}
           previousLinkClassName={'page-link'}
           pageClassName={'page-item'}

@@ -15,7 +15,7 @@ export type StockTransactionProps = {
   stockName: string
   shares: number
   type: string
-  category: string
+  sellOrBuy: string
   price: number
   amount: number
   fee: number
@@ -98,16 +98,16 @@ const TransactionRecordCard: React.FC = () => {
           <tbody>
             {currentPageData.map((transaction: StockTransactionProps, index: number) =>
               < tr key={index} className='text-center' >
-                <td><span className="text-muted">{moment(transaction.date).format('YYYY/MM/DD')}</span></td>
+                <td><span className="text-muted">{moment(transaction.date).format('YYYY.MM.DD')}</span></td>
                 <td><a href="#" className="text-reset" tabIndex={-1}>{transaction.account.name}</a></td>
                 <td>{transaction.stockName}</td>
-                <td>{transaction.category}</td>
+                <td>{transaction.sellOrBuy}</td>
                 <td>{transaction.type}</td>
                 <td className='text-end'>{transaction.shares}</td>
                 <td className='text-end'>{Number(transaction.price).toFixed(2)}</td>
                 <td className='text-end'>{transaction.fee}</td>
                 <td className='text-end'>{transaction.feeAfterDiscount}</td>
-                <td className='text-end'>{transaction.category == '賣' ? transaction.transactionTax : '-'}</td>
+                <td className='text-end'>{transaction.sellOrBuy == '賣' ? transaction.transactionTax : '-'}</td>
                 {
                   transaction.bookPayment > 0
                     ? <td className='text-end text-red'>{transaction.bookPayment}</td>
@@ -143,7 +143,7 @@ const TransactionRecordCard: React.FC = () => {
           pageRangeDisplayed={5}
           marginPagesDisplayed={2}
           onPageChange={handlePageClick}
-          containerClassName={'pagination m0 ms-auto'}
+          containerClassName={'pagination m-0 ms-auto'}
           previousClassName={'page-item'}
           previousLinkClassName={'page-link'}
           pageClassName={'page-item'}

@@ -1,5 +1,5 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
-import { calculateBalancePrice, calculateUnrealizedGainLossRatio } from '@/lib/stock'
+import { calculateAvgCost, calculateBalancePrice, calculateUnrealizedGainLossRatio } from '@/lib/stock'
 import { Prisma, StockPosition, StockTransaction } from '@prisma/client'
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { prisma } from '../../../db/prisma'
@@ -93,7 +93,7 @@ export default async function handle(
             },
             data: {
               shares: shares,
-              avgCost: Math.abs(cost / shares).toFixed(2),
+              avgCost: calculateAvgCost(cost, shares),
               cost: cost,
               balancePrice: calculateBalancePrice(cost, shares, transaction.type == 'ETF'),
             }
@@ -112,7 +112,7 @@ export default async function handle(
                   shares: reqData.shares,
                   price: 0,
                   marketValue: Math.round(reqData.shares * 0),
-                  avgCost: Math.abs(reqData.bookPayment / reqData.shares).toFixed(2),
+                  avgCost: calculateAvgCost(reqData.bookPayment, reqData.shares),
                   cost: reqData.bookPayment,
                   balancePrice: calculateBalancePrice(reqData.bookPayment, reqData.shares, reqData.type == 'ETF'),
                   unrealizedGainLoss: 0,

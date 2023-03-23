@@ -11,21 +11,23 @@ datasource db {
 }
 
 model Stock {
-  id            String          @id // 股票代號
-  name          String
-  industryType  String
-  isEtf         Boolean
-  StockPosition StockPosition[]
+  id                    String                  @id // 股票代號
+  name                  String
+  industryType          String
+  isEtf                 Boolean
+  StockPosition         StockPosition[]
+  StockExDividendRecord StockExDividendRecord[]
 }
 
 model StockAccount {
-  id               Int                @id @default(autoincrement())
-  name             String             @unique
-  minFee           Int
-  regularFee       Int
-  feeDiscount      Decimal
-  StockPosition    StockPosition[]
-  StockTransaction StockTransaction[]
+  id                    Int                     @id @default(autoincrement())
+  name                  String                  @unique
+  minFee                Int
+  regularFee            Int
+  feeDiscount           Decimal
+  StockPosition         StockPosition[]
+  StockTransaction      StockTransaction[]
+  StockExDividendRecord StockExDividendRecord[]
 }
 
 model StockPosition {
@@ -50,7 +52,7 @@ model StockPosition {
 }
 
 // 股票總市值
-model StockValue {
+model StockValueTrend {
   id        Int      @id @default(autoincrement())
   value     Int
   updatedAt DateTime @updatedAt
@@ -74,4 +76,25 @@ model StockTransaction {
   transactionCost  Int // 交易成本 = 交易手續費(折讓後) + 賣出交易稅
   actualPayment    Int // 實際收付
   bookPayment      Int // 帳面收付
+}
+
+// 除權息紀錄
+model StockExDividendRecord {
+  id                   Int          @id @default(autoincrement())
+  exDividendDate       DateTime
+  dividendPayDate      DateTime
+  account              StockAccount @relation(fields: [stockAccountId], references: [id])
+  stockAccountId       Int
+  stock                Stock        @relation(fields: [stockId], references: [id])
+  stockId              String
+  shares               Int
+  cashDividend         Decimal
+  cashDividendPayable  Int
+  stockDividend        Decimal
+  stockDividendPayable Int
+  tax                  Int
+  fee                  Int
+  healthInsurance      Int
+  cashActualPayment    Int
+  stockActualPayment   Int
 }
