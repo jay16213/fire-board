@@ -29,13 +29,18 @@ export const calculateTax = (shares: number, price: number, isEtf: boolean): num
   }
 }
 
-export const calculateAvgCost = (shares: number, cost: number): string => {
+export const calculateAvgCost = (cost: number, shares: number): string => {
   return Math.abs(cost / shares).toFixed(2)
 }
 
 export const calculateBalancePrice = (cost: number, shares: number, isEtf: boolean) => {
   const ratio = isEtf ? (1 - (feeRatio + etfTaxRatio)) : (1 - (feeRatio + normalTaxRatio))
   return Number(Math.abs(cost) / (shares * ratio)).toFixed(2)
+}
+
+export const calculateUnrealizedGainLoss = (shares: number, price: number, cost: number, isEtf: boolean) => {
+  const ratio = isEtf ? (1 - (feeRatio + etfTaxRatio)) : (1 - (feeRatio + normalTaxRatio))
+  return Math.round(shares * price * ratio) - Math.abs(cost)
 }
 
 export const calculateUnrealizedGainLossRatio = (unrealizedGainLoss: number, cost: number) => {

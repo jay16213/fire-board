@@ -8,6 +8,7 @@ import useSWR from 'swr';
 
 export type ExDividendRecordCardProps = {
   dividendRecords?: StockExDividendRecord[]
+  title?: string
   headers?: string[]
   pagination?: boolean
 }
@@ -21,7 +22,7 @@ const defaultHeaders = [
 ]
 
 const ExDividendRecordCard: React.FC<ExDividendRecordCardProps> = (
-  { dividendRecords, headers = defaultHeaders, pagination = true }: ExDividendRecordCardProps
+  { dividendRecords, title = '除權息紀錄', headers = defaultHeaders, pagination = true }: ExDividendRecordCardProps
 ) => {
   const [currentPage, setCurrentPage] = useState(0)
   const [recordPerPage, setRecordPerPage] = useState(5)
@@ -50,9 +51,9 @@ const ExDividendRecordCard: React.FC<ExDividendRecordCardProps> = (
   return (
     <Card>
       <Card.Header>
-        <Card.Title as={'h3'}>除權息紀錄</Card.Title>
+        <Card.Title as={'h3'}>{title}</Card.Title>
       </Card.Header>
-      <Card.Body className='border-bottom py-3'>
+      {/* <Card.Body className='border-bottom py-3'>
         <div className="d-flex">
           <div className="text-muted">
             一頁顯示
@@ -63,7 +64,7 @@ const ExDividendRecordCard: React.FC<ExDividendRecordCardProps> = (
             筆
           </div>
         </div>
-      </Card.Body>
+      </Card.Body> */}
 
       <div className="table-responsive">
         <table className="table card-table table-vcenter text-nowrap datatable">
@@ -76,7 +77,7 @@ const ExDividendRecordCard: React.FC<ExDividendRecordCardProps> = (
             {currentPageData.map((record: StockExDividendRecord, index: number) =>
               <tr key={index}>
                 <td className='text-center'>{moment(record.exDividendDate).format('YYYY.MM.DD')}</td>
-                <td className='text-end'>{record.stockId}</td>
+                <td className='text-center'>{record.stockId}</td>
                 <td className='text-end'>{record.shares}</td>
                 <td className='text-end'>{record.cashActualPayment}</td>
                 <td className='text-end'>{record.stockActualPayment}</td>
@@ -87,7 +88,7 @@ const ExDividendRecordCard: React.FC<ExDividendRecordCardProps> = (
       </div>
 
       <Card.Footer className='d-flex align-items-center'>
-        {pagination &&
+        {pagination && pageCount > 1 &&
           <>
             <p className="m-0 text-muted">
               顯示第 <span>{`${currentPage * recordPerPage + 1}`}</span> - <span>{`${currentPage * recordPerPage + recordPerPage}`}</span> 筆庫存

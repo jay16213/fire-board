@@ -191,53 +191,50 @@ const Home = (props: any) => {
             <Col sm={6} lg={3}>
               <Card>
                 <Card.Body>
-                  <div className='d-flex flex-column align-items-center'>
-                    <h2>股票總市值</h2>
+                  <Card.Title as={'h3'} className='fw-bold mb-0'>股票總市值</Card.Title>
+                </Card.Body>
+                <div className='d-flex justify-content-center align-items-baseline mb-2'>
+                  <div className='h1 me-2'>
+                    ${data.totalMarketValue.toLocaleString('en-US')}
                   </div>
-                  <div className='d-flex justify-content-center align-items-baseline'>
-                    <div className='h1 mb-0 me-2'>
-                      ${data.totalMarketValue.toLocaleString('en-US')}
-                    </div>
-                    <div>
-                      <span className='d-inline-flex align-items-center lh-1 text-muted'>
-                        (持有成本: {Math.abs(data.totalCost).toLocaleString('en-US')})
+                  <div>
+                    <span className='d-inline-flex align-items-center lh-1 text-muted'>
+                      (持有成本: {Math.abs(data.totalCost).toLocaleString('en-US')})
+                    </span>
+                  </div>
+                </div>
+              </Card>
+            </Col>
+            <Col sm={6} lg={3}>
+              <Card>
+                <Card.Body>
+                  <Card.Title as={'h3'} className='fw-bold mb-0'>未實現損益</Card.Title>
+                </Card.Body>
+                <div className='d-flex justify-content-center align-items-baseline mb-2'>
+                  <div className="h1 me-2">
+                    ${data.totalUnrealizedGainLoss}
+                  </div>
+                  <div className='d-inline-flex align-items-center lh-1'>
+                    {data.totalUnrealizedGainLoss > 0
+                      ?
+                      <span className='text-red'>
+                        {data.totalUnrealizedGainLossRatio}%<IconTrendingUp className='icon ms-1'></IconTrendingUp>
                       </span>
-                    </div>
+                      :
+                      <span className='text-green'>
+                        {data.totalUnrealizedGainLossRatio}%<IconTrendingDown className='icon ms-1'></IconTrendingDown>
+                      </span>
+                    }
                   </div>
-                </Card.Body>
+                </div>
               </Card>
             </Col>
+
             <Col sm={6} lg={3}>
               <Card>
                 <Card.Body>
-                  <div className='d-flex flex-column align-items-center'>
-                    <h2>未實現損益</h2>
-                  </div>
-                  <div className="d-flex justify-content-center align-items-baseline">
-                    <div className="h1 mb-0 me-2">
-                      ${data.totalUnrealizedGainLoss}
-                    </div>
-                    <div className='d-inline-flex align-items-center lh-1'>
-                      {data.totalUnrealizedGainLoss > 0
-                        ?
-                        <span className='text-red'>
-                          {data.totalUnrealizedGainLossRatio}%<IconTrendingUp className='icon ms-1'></IconTrendingUp>
-                        </span>
-                        :
-                        <span className='text-green'>
-                          {data.totalUnrealizedGainLossRatio}%<IconTrendingDown className='icon ms-1'></IconTrendingDown>
-                        </span>
-                      }
-                    </div>
-                  </div>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col sm={6} lg={3}>
-              <Card>
-                <Card.Body>
-                  <div className='d-flex align-items-center'>
-                    <div className='subheader'>今年已領股利</div>
+                  <div className='d-flex'>
+                    <Card.Title as={'h3'} className='fw-bold mb-0'>今年已領股利</Card.Title>
                     {/* {timeFilter(defult_filter_list)} */}
                   </div>
                 </Card.Body>
@@ -259,8 +256,11 @@ const Home = (props: any) => {
               </Card>
             </Col>
 
+            <Col sm={12} lg={12}>
+              <AssetTrendCard height={'250px'}></AssetTrendCard>
+            </Col>
+
             <Col sm={12} lg={4}>
-              {/* 圓餅圖 */}
               <Card>
                 <Card.Body>
                   <div className='d-flex flex-column align-items-center'>
@@ -272,7 +272,8 @@ const Home = (props: any) => {
                         options={{ ...defaultOptions, labels: data.positions.map((d) => d.stockName) }}
                         series={data.positions.map((d) => d.marketValue)}
                         type='donut'
-                        width={380}
+                        height={370}
+                        width={370}
                       >
                       </ApexChart>
                     </div>
@@ -304,6 +305,7 @@ const Home = (props: any) => {
                         return acc
                       }, new Map()).values())}
                       type='donut'
+                      height={380}
                       width={380}
                     >
                     </ApexChart>
@@ -312,17 +314,14 @@ const Home = (props: any) => {
               </Card>
             </Col>
 
-            <Col sm={12} lg={6}>
-              <AssetTrendCard></AssetTrendCard>
+            <Col sm={12} lg={4}>
+              <ExDividendRecordCard title='今年除權息' dividendRecords={thisYearDividendRecords}></ExDividendRecordCard>
             </Col>
 
-            <Col sm={12} lg={6}>
+
+
+            <Col sm={12} lg={8}>
               <StockPositionCard positions={data}></StockPositionCard>
-            </Col>
-
-            <Col sm={12} lg={6}>
-
-              <ExDividendRecordCard></ExDividendRecordCard>
             </Col>
 
             {/* stock transaction */}

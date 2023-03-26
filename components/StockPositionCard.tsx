@@ -1,7 +1,9 @@
 import { fetcher } from '@/lib/fetcher';
 import { StockPositionModel, StockPositionResponse } from '@/pages/api/stock/positions';
+import { IconDotsVertical, IconDownload, IconRefresh } from '@tabler/icons-react';
+import Link from 'next/link';
 import { useState } from 'react';
-import { Card } from 'react-bootstrap';
+import { Card, Dropdown } from 'react-bootstrap';
 import ReactPaginate from 'react-paginate';
 import useSWR from 'swr';
 
@@ -52,8 +54,24 @@ const StockPositionCard: React.FC<StockPositionCardProps> = (
 
   return (
     <Card>
-      <Card.Header>
+      <Card.Header className='d-flex justify-content-between'>
         <Card.Title as={'h3'}>台股庫存</Card.Title>
+        <div className='card-actions btn-actions'>
+          <Link href={'#'} className='btn-action'>
+            <IconRefresh className='icon'></IconRefresh>
+          </Link>
+          <Dropdown align={'end'}>
+            <Dropdown.Toggle as={'a'} className='btn-action'>
+              <IconDotsVertical className='icon'></IconDotsVertical>
+            </Dropdown.Toggle>
+            <Dropdown.Menu>
+              <Dropdown.Item>
+                <IconDownload className='icon'></IconDownload>
+                <span className='ms-2'>下載為 csv</span>
+              </Dropdown.Item>
+            </Dropdown.Menu>
+          </Dropdown>
+        </div>
       </Card.Header>
       <Card.Body className='border-bottom py-3'>
         <div className="d-flex">

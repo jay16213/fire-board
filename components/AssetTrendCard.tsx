@@ -4,7 +4,8 @@ import ApexChart from './elements/ApexChart';
 
 export interface AssetTrendCardProps {
   apexOptions?: ApexOptions,
-  width?: number
+  height?: number | string,
+  width?: number | string
 }
 
 type AssetTrendCardState = {}
@@ -18,13 +19,19 @@ const defaultOptions: ApexOptions = {
   chart: {
     type: 'area',
     stacked: false,
-    height: 350,
+    // height: '200px',
     zoom: {
       type: 'x',
       enabled: true,
       autoScaleYaxis: true
     },
     toolbar: {
+      show: false,
+      // tools: {
+      //   download: true,
+      //   reset: true,
+      //   pan: false
+      // },
       autoSelected: 'zoom'
     }
   },
@@ -39,18 +46,20 @@ const defaultOptions: ApexOptions = {
   //   align: 'left'
   // },
   fill: {
+    // type: 'solid',
+    // opacity: 0.5,
     type: 'gradient',
     gradient: {
       shadeIntensity: 1,
       inverseColors: false,
-      opacityFrom: 0.5,
-      opacityTo: 0,
+      opacityFrom: 0.6,
+      opacityTo: 0.4,
       stops: [0, 90, 100]
     },
   },
   yaxis: {
     labels: {
-      formatter: function (val: number) {
+      formatter: (val: number) => {
         return (val / 10000).toFixed(0);
       },
     },
@@ -74,22 +83,23 @@ const defaultOptions: ApexOptions = {
 }
 
 export const AssetTrendCard: React.FC<AssetTrendCardProps> = (props: AssetTrendCardProps) => {
-  const { apexOptions = defaultOptions, width = 600 } = props;
+  const { apexOptions = defaultOptions, width = '100%', height = '100%' } = props;
 
   return (
     <Card>
       <Card.Body>
-        <div className='d-flex align-items-center'>
-          <h2>資產市值趨勢變化</h2>
-        </div>
-        <div className='d-flex flex-column align-items-center'>
-          <ApexChart
-            options={apexOptions}
-            series={series}
-            type="area"
-            width={width}>
-          </ApexChart>
-        </div>
+        <Card.Title as={'h2'} className='fw-bold mb-0'>
+          資產市值趨勢變化
+        </Card.Title>
+        {/* <div className='d-flex flex-column align-items-center'> */}
+        <ApexChart
+          options={apexOptions}
+          series={series}
+          type="area"
+          height={height}
+          width={width}>
+        </ApexChart>
+        {/* </div> */}
       </Card.Body>
     </Card>
   )

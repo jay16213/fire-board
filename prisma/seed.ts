@@ -158,6 +158,7 @@ async function main() {
     }
   })
 
+  // TODO: wait stock info insert done
   const positionData = readFileSync('./prisma/seeds/position.csv').toString()
   Papa.parse(positionData, {
     header: true,
