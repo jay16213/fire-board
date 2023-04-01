@@ -96,7 +96,7 @@ export default async function handle(
         // step 1: check stock position
         const position: StockPosition = await prisma.stockPosition.findFirstOrThrow({
           where: {
-            stockAccountId: parseInt(reqData.accountId),
+            // stockAccountId: parseInt(reqData.accountId),
             stockId: reqData.stockId,
           },
         })
@@ -123,10 +123,10 @@ export default async function handle(
         // step 4: update position to database
         await prisma.stockPosition.update({
           where: {
-            stockAccountId_stockId: {
-              stockAccountId: transaction.stockAccountId,
-              stockId: transaction.stockId
-            },
+            // stockAccountId_stockId: {
+            // stockAccountId: transaction.stockAccountId,
+            stockId: transaction.stockId,
+            // },
           },
           data: {
             shares: shares,
@@ -152,7 +152,7 @@ export default async function handle(
 
             await prisma.stockPosition.create({
               data: {
-                account: { connect: { id: transaction.stockAccountId } },
+                // account: { connect: { id: transaction.stockAccountId } },
                 stock: { connect: { id: transaction.stockId } },
                 shares: transaction.shares,
                 price: price,

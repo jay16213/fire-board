@@ -52,5 +52,5 @@ export const calculateCashDividendPayable = (shares: number, dividend: number) =
 }
 
 export const calculateStockDividendPayable = (shares: number, dividend: number) => {
-  return Math.floor(shares * dividend)
+  return Math.floor(shares * dividend * 0.1)
 }

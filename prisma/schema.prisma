@@ -25,16 +25,14 @@ model StockAccount {
   minFee                Int
   regularFee            Int
   feeDiscount           Decimal
-  StockPosition         StockPosition[]
   StockTransaction      StockTransaction[]
   StockExDividendRecord StockExDividendRecord[]
 }
 
+// TODO: position list for each stock account
 model StockPosition {
-  account                 StockAccount @relation(fields: [stockAccountId], references: [id])
-  stockAccountId          Int
-  stock                   Stock        @relation(fields: [stockId], references: [id])
-  stockId                 String
+  stock                   Stock   @relation(fields: [stockId], references: [id])
+  stockId                 String  @id
   shares                  Int
   //現價
   price                   Decimal
@@ -47,8 +45,6 @@ model StockPosition {
   unrealizedGainLoss      Int
   // 未實現損益率
   unrealizedGainLossRatio Decimal
-
-  @@id([stockAccountId, stockId])
 }
 
 // 股票總市值

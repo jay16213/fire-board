@@ -64,6 +64,8 @@ async function main() {
     },
   })
 
+  await prisma.stockTransaction.deleteMany({})
+
   const transactionData = readFileSync('./prisma/seeds/transaction.csv').toString()
   Papa.parse(transactionData, {
     header: true,
@@ -168,14 +170,13 @@ async function main() {
       results.data.map(async (position, index) => {
         await prisma.stockPosition.upsert({
           where: {
-            stockAccountId_stockId: {
-              stockAccountId: sinopac.id,
-              stockId: position['股票代號'],
-            }
+            stockId: position['股票代號'],
+            // stockAccountId: sinopac.id,
+            // stockId: position['股票代號'],
           },
           update: {},
           create: {
-            account: { connect: { id: sinopac.id }, },
+            // account: { connect: { id: sinopac.id }, },
             stock: { connect: { id: position['股票代號'] }, },
             shares: parseInt(position['股數'], 10),
             price: parseFloat(position['現價']),

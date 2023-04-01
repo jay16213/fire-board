@@ -43,32 +43,32 @@ export default async function handle(
         })
 
         const data = positions.reduce((result: StockPositionModel[], position: StockPosition & { stock: Stock }) => {
-          const existingPosition = result.find((p) => p.stockId === position.stockId)
+          // const existingPosition = result.find((p) => p.stockId === position.stockId)
 
-          if (existingPosition) {
-            existingPosition.shares += position.shares
-            existingPosition.cost += position.cost
-            existingPosition.marketValue += position.marketValue
-            existingPosition.avgCost = Math.abs(existingPosition.cost / existingPosition.shares).toFixed(2)
-            existingPosition.balancePrice = calculateBalancePrice(existingPosition.cost, existingPosition.shares, existingPosition.isEtf)
-            existingPosition.unrealizedGainLoss += position.unrealizedGainLoss
-            existingPosition.unrealizedGainLossRatio = calculateUnrealizedGainLossRatio(existingPosition.unrealizedGainLoss, existingPosition.cost)
-          } else {
-            result.push({
-              stockId: position.stock.id,
-              stockName: position.stock.name,
-              industryType: position.stock.industryType,
-              isEtf: position.stock.isEtf,
-              shares: position.shares,
-              price: parseFloat(position.price.toFixed(2)),
-              marketValue: position.marketValue,
-              avgCost: position.avgCost.toFixed(2),
-              cost: position.cost,
-              balancePrice: position.balancePrice.toFixed(2),
-              unrealizedGainLoss: position.unrealizedGainLoss,
-              unrealizedGainLossRatio: position.unrealizedGainLossRatio.toFixed(2),
-            })
-          }
+          // if (existingPosition) {
+          //   existingPosition.shares += position.shares
+          //   existingPosition.cost += position.cost
+          //   existingPosition.marketValue += position.marketValue
+          //   existingPosition.avgCost = Math.abs(existingPosition.cost / existingPosition.shares).toFixed(2)
+          //   existingPosition.balancePrice = calculateBalancePrice(existingPosition.cost, existingPosition.shares, existingPosition.isEtf)
+          //   existingPosition.unrealizedGainLoss += position.unrealizedGainLoss
+          //   existingPosition.unrealizedGainLossRatio = calculateUnrealizedGainLossRatio(existingPosition.unrealizedGainLoss, existingPosition.cost)
+          // } else {
+          result.push({
+            stockId: position.stock.id,
+            stockName: position.stock.name,
+            industryType: position.stock.industryType,
+            isEtf: position.stock.isEtf,
+            shares: position.shares,
+            price: parseFloat(position.price.toFixed(2)),
+            marketValue: position.marketValue,
+            avgCost: position.avgCost.toFixed(2),
+            cost: position.cost,
+            balancePrice: position.balancePrice.toFixed(2),
+            unrealizedGainLoss: position.unrealizedGainLoss,
+            unrealizedGainLossRatio: position.unrealizedGainLossRatio.toFixed(2),
+          })
+          // }
           return result
         }, [])
 
